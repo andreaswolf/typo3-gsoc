@@ -1,0 +1,3 @@
+[submodule "Resources/PHP/Erfurt"]
+	path = Resources/PHP/Erfurt
+	url = https://github.com/AKSW/Erfurt.git
