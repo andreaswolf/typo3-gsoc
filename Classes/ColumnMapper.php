@@ -28,7 +28,7 @@
 
 
 /**
- * The column mapper for mapping database column descriptions to semantically usable data types
+ * The column mapper for mapping database column descriptions to semantic data types
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
@@ -48,5 +48,46 @@ class Tx_RdfExport_ColumnMapper {
 		 *  - define sensible types for each column type defined in TCA (also respect e.g. eval for input)
 		 *  - find out if any kind of automagic conversion might make sense here
 		 */
+		$configuration = $column->getConfiguration();
+
+		$result = '';
+		switch($configuration['type']) {
+			case 'input':
+				$result = $this->mapInputFieldToDataType($configuration);
+
+				break;
+			default:
+				throw new InvalidArgumentException('No mapping found for column type ' . $configuration['type'], 1310670994);
+		}
+
+		return $result;
+	}
+
+	protected function mapInputFieldToDataType($configuration) {
+		$type = '';
+		$statements = array();
+
+		if (!isset($configuration['eval'])) {
+			$type = 'http://www.w3.org/2001/XMLSchema#string';
+		} else {
+			if (preg_match('/int/', $configuration['eval'])) {
+				// TODO add mapping for ranges here
+				$type = 'http://www.w3.org/2001/XMLSchema#integer';
+			} elseif (preg_match('/datetime/', $configuration['eval'])) {
+				$type = 'http://www.w3.org/2001/XMLSchema#dateTime';
+			} elseif (preg_match('/date/', $configuration['eval'])) {
+				$type = 'http://www.w3.org/2001/XMLSchema#date';
+			} elseif (preg_match('/time|timesec/', $configuration['eval'])) {
+				$type = 'http://www.w3.org/2001/XMLSchema#time';
+			}
+		}
+
+		if ($type === '') {
+			throw new InvalidArgumentException('No mapping found for input column.', 1310670995);
+		}
+
+		$statements['http://www.w3.org/1999/02/22-rdf-syntax-ns#type'] = $type;
+
+		return $statements;
 	}
 }
