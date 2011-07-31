@@ -125,37 +125,26 @@ class Tx_RdfExport_DataStructureExporter {
 	 * @param  $table
 	 * @return void
 	 */
-	public function exportTable(t3lib_DataStructure_Abstract $dataStructureObject) {
-		/**
-		 * - get table description object (t3lib_DataStructure)
-		 * - create graph
-		 * - generate a sensible RDFS description for each column
-		 */
-		/** @var $dataStructureResolver t3lib_DataStructure_Resolver_Tca */
-		//$dataStructureResolver = t3lib_div::makeInstance('t3lib_DataStructure_Resolver_Tca');
-		//$tableDefinitionObject = $dataStructureResolver->resolveDataStructure($table);
-
+	public function exportDataStructure(t3lib_DataStructure_Abstract $dataStructureObject) {
+		// TODO import relevant Ontologies here if neccessary; or do this during initalization
 		/** @var $RdfParser \Erfurt\Syntax\RdfParser */
 		//$RdfParser = $this->objectManager->get('\Erfurt\Syntax\RdfParser', 'rdfxml');
 		//$RdfParser->initializeObject();
 		//$parsedOntology = $RdfParser->parseToStore('/tmp/typo3tables.rdf', \Erfurt\Syntax\RdfParser::LOCATOR_FILE, 'http://typo3.org');
 
-		//$this->graphStore->addStatement();
-
 		$this->addDataStructureMetadataStatementsToStore($dataStructureObject);
 
+			// Looping over all fields, exporting them to triples
 		foreach ($dataStructureObject->getFieldNames() as $fieldName) {
 			$fieldObject = $dataStructureObject->getFieldObject($fieldName);
 
 			$statements = array();
 			try {
-				// get $statements from ColumnMapper object
 				$statements = $this->columnMapper->mapColumnDescriptionToRdfDataType($fieldObject);
 			} catch (RuntimeException $e) {
 				// handle exception: column could not be mapped
 			}
 
-			// add statements to store
 			$this->graph->addMultipleStatements($statements);
 		}
 
@@ -177,17 +166,6 @@ class Tx_RdfExport_DataStructureExporter {
 			));
 		}
 		//
-	}
-
-	/**
-	 * 
-	 *
-	 * @param string $table
-	 * @param string $predicate
-	 * @param string $object
-	 * @return void
-	 */
-	protected function addTupleForTable($table, $predicate, $object) {
 	}
 }
 

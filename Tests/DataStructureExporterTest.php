@@ -45,23 +45,39 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_Phpunit_TestCase {
 	protected $tableName;
 
 	/**
+	 * The data structure fixture
+	 *
+	 * @var string
+	 */
+	protected $dataStructureFixture;
+
+	/**
+	 * The TCA entry for the data structure fixture
+	 *
+	 * @var t3lib_DataStructure_Abstract
+	 */
+	protected $dataStructureTcaFixture;
+
+	/**
 	 * @var Tx_RdfExport_DataStructureExporter
 	 */
 	public function setUp() {
 		parent::setUp();
 
 		$bootstrap = new \Erfurt\Core\Bootstrap('Testing');
+		$bootstrap->run();
 
 		$this->tableName = uniqid();
 		$this->fixture = new Tx_RdfExport_DataStructureExporter($this->tableName);
 	}
 
-	protected function addFakeTcaTable($tcaEntry) {
-		$GLOBALS['TCA'][$this->tableName] = $tcaEntry;
+	protected function createFakeDataStructureObject($tcaEntry) {
+		$this->dataStructureTcaFixture = $tcaEntry;
+		$this->dataStructureFixture = new t3lib_DataStructure_Tca($this->tableName, $tcaEntry);
 	}
 
 	protected function getMockedGraph() {
-		return $this->getMock('\Erfurt\Domain\Model\Rdfs\Graph');
+		return $this->getMock('Erfurt\Domain\Model\Rdfs\Graph');
 	}
 
 	/**
@@ -79,15 +95,13 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_Phpunit_TestCase {
 	 */
 	public function noTriplesAreAddedForEmptyTca() {
 		$tca = array('ctrl' => array(), 'columns' => array());
-		$this->addFakeTcaTable($tca);
+		$this->createFakeDataStructureObject($tca);
 		$this->fixture->setGraph($this->getMockedGraph());
-		$this->fixture->exportTable($this->tableName);
+		$this->fixture->exportDataStructure($this->dataStructureFixture);
 
 		$graphStore = $this->fixture->getGraphStore();
 		$graph = $this->fixture->getGraph();
-		//print_r($this->readAttribute($graphStore, 'backendAdapter'));
 
-		//$this->markTestIncomplete('This test can be implemented if the statement Store class has a getMatchingStatements() method.');
 		$this->assertEquals(0, count($graph->getMatchingStatements(NULL, NULL, NULL)));
 	}
 
@@ -96,7 +110,7 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_Phpunit_TestCase {
 	 */
 	public function tripleForCreationDateIsAddedIfTableHasCreationDate() {
 		$tca = array('ctrl' => array('crdate' => uniqid()), 'columns' => array());
-		$this->addFakeTcaTable($tca);
+		$this->createFakeDataStructureObject($tca);
 
 		/** @var $graph \Erfurt\Domain\Model\Rdfs\Graph */
 		$graph = $this->getMockedGraph();
@@ -104,21 +118,51 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_Phpunit_TestCase {
 		      ->will($this->returnCallback(array($this, 'tripleForCreationDateIsAddedIfTableHasCreationDate_checkParametersCallback')));
 
 		$this->fixture->setGraph($graph);
-
 		$this->fixture->initializeObject();
-		$this->fixture->exportTable($this->tableName);
+
+		$this->fixture->exportDataStructure($this->dataStructureFixture);
+
+		// all assertions are done in the callback below
 	}
 
 	public function tripleForCreationDateIsAddedIfTableHasCreationDate_checkParametersCallback() {
 		$args = func_get_args();
 		$statements = $args[0];
 		$predicates = array_shift(array_values($statements));
-		$fieldName = $GLOBALS['TCA'][$this->tableName]['ctrl']['crdate'];
+		$fieldName = $this->dataStructureTcaFixture['ctrl']['crdate'];
 
 		$this->assertStringEndsWith($this->tableName . '.' . $fieldName, array_shift(array_keys($statements)));
 		$this->assertArrayHasKey('rdf:type', $predicates);
 		$this->assertEquals('rdf:property', $predicates['rdf:type']);
 		$this->assertArrayHasKey('rdfs:subPropertyOf', $predicates);
-		$this->assertEquals('dcterms:created', $predicates['rdf:sameAs']);
+		$this->assertEquals('dcterms:created', $predicates['rdfs:subPropertyOf']);
+	}
+
+	/**
+	 * @test
+	 * @group integration
+	 */
+	public function statementsFromColumnMapperAreAddedAfterMapping() {
+		$this->createFakeDataStructureObject(array('columns' => array('someColumn' => array())));
+
+		$expectedStatements = array(
+			uniqid() => array(
+				uniqid() => uniqid(),
+				uniqid() => uniqid()
+			)
+		);
+
+		/** @var $graph \Erfurt\Domain\Model\Rdfs\Graph */
+		$graph = $this->getMockedGraph();
+		$graph->expects($this->once())->method('addMultipleStatements')
+		      ->with($expectedStatements);
+		$mockedColumnMapper = $this->getMock('Tx_RdfExport_ColumnMapper');
+		$mockedColumnMapper->expects($this->once())->method('mapColumnDescriptionToRdfDataType')->will($this->returnValue($expectedStatements));
+
+		$this->fixture->setGraph($graph);
+		$this->fixture->setColumnMapper($mockedColumnMapper);
+		$this->fixture->initializeObject();
+
+		$this->fixture->exportDataStructure($this->dataStructureFixture);
 	}
 }
