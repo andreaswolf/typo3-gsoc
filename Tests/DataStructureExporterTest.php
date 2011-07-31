@@ -27,15 +27,15 @@
  ***************************************************************/
 
 /**
- * Testcase for the table definition exporter
+ * Testcase for the data structure exporter
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
  * @subpackage 
  */
-class Tx_RdfExport_TableDefinitionExporterTest extends Tx_Phpunit_TestCase {
+class Tx_RdfExport_DataStructureExporterTest extends Tx_Phpunit_TestCase {
 	/**
-	 * @var Tx_RdfExport_TableDefinitionExporter
+	 * @var Tx_RdfExport_DataStructureExporter
 	 */
 	protected $fixture;
 
@@ -45,7 +45,7 @@ class Tx_RdfExport_TableDefinitionExporterTest extends Tx_Phpunit_TestCase {
 	protected $tableName;
 
 	/**
-	 * @var Tx_RdfExport_TableDefinitionExporter
+	 * @var Tx_RdfExport_DataStructureExporter
 	 */
 	public function setUp() {
 		parent::setUp();
@@ -53,7 +53,7 @@ class Tx_RdfExport_TableDefinitionExporterTest extends Tx_Phpunit_TestCase {
 		$bootstrap = new \Erfurt\Core\Bootstrap('Testing');
 
 		$this->tableName = uniqid();
-		$this->fixture = new Tx_RdfExport_TableDefinitionExporter($this->tableName);
+		$this->fixture = new Tx_RdfExport_DataStructureExporter($this->tableName);
 	}
 
 	protected function addFakeTcaTable($tcaEntry) {
