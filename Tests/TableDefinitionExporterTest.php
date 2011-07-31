@@ -26,7 +26,6 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-
 /**
  * Testcase for the table definition exporter
  *
@@ -50,6 +49,8 @@ class Tx_RdfExport_TableDefinitionExporterTest extends Tx_Phpunit_TestCase {
 	 */
 	public function setUp() {
 		parent::setUp();
+
+		$bootstrap = new \Erfurt\Core\Bootstrap('Testing');
 
 		$this->tableName = uniqid();
 		$this->fixture = new Tx_RdfExport_TableDefinitionExporter($this->tableName);
