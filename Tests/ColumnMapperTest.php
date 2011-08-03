@@ -55,12 +55,6 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	protected $columnName;
 
-	protected $prefixes = array(
-		'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-		't3' => 'http://typo3.org/semantic/elements#',
-		't3ds' => 'http://typo3.org/semantic/datastructure/'
-	);
-
 	public function setUp() {
 		$this->fixture = new Tx_RdfExport_ColumnMapper();
 
@@ -87,8 +81,8 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 * @return void
 	 */
 	protected function verifyDomainProperty($statements) {
-		$this->assertArrayHasKey($this->prefixes['rdf'] . 'domain', $statements);
-		$this->assertEquals($this->prefixes['t3ds'] . $this->dataStructureIdentifier, $statements[$this->prefixes['rdf'] . 'domain']);
+		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'domain', $statements);
+		$this->assertEquals($this->prefixes['t3ds'] . $this->dataStructureIdentifier, $statements[$this->prefixes['rdfs'] . 'domain']);
 	}
 
 	public function primitiveTypesDataProvider() {
@@ -158,51 +152,41 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	public function primitiveDataTypesAreCorrectlyMapped($columnConfiguration, $expectedDataType) {
 		$column = $this->createMockedColumn($columnConfiguration);
 
-		$resultingStatements = $this->fixture->mapColumnDescriptionToRdfDataType($column);
+		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
 
-		$this->assertEquals($expectedDataType, $resultingStatements[$this->prefixes['rdf'] . 'type']);
-		$this->verifyDomainProperty($resultingStatements);
-	}
-
-	public function relationColumnsDataProvider() {
-		return array(
-			'internal_type db with one table' => array(
-				array(
-					'type' => 'group',
-					'internal_type' => 'db',
-					'allowed' => 'tt_content'
-				),
-				array(
-					$this->prefixes['rdfs'] . 'range' => $this->prefixes['t3ds'] . 'tt_content',
-					// TODO add a subtypeOf property with sth. like relatedTo (skos:related?)
-				)
-			)
-		);
+		$this->assertEquals($expectedDataType, $resultingStatements[$columnSubject][$this->prefixes['rdf'] . 'type']);
+		$this->verifyDomainProperty($resultingStatements[$columnSubject]);
 	}
 
 	/**
 	 * @test
-	 * @dataProvider relationColumnsDataProvider
-	 *
-	 * @param array $columnConfiguration The configuration for this column
-	 * @param array $expectedStatements The statements that should result from the mapping; note that there may be other
-	 *                                  statements than these in the mapping
 	 */
-	public function relationColumnsAreCorrectlyMapped($columnConfiguration, $expectedStatements) {
-		$column = $this->createMockedColumn($columnConfiguration);
+	public function databaseRelationColumnWithOneForeignTableIsCorrectlyMapped($columnConfiguration, $expectedStatements) {
+		$column = $this->createMockedColumn(array(
+			'type' => 'group',
+			'internal_type' => 'db',
+			'allowed' => 'tt_content'
+		));
 
-		$resultingStatements = $this->fixture->mapColumnDescriptionToRdfDataType($column);
+		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
 
-		foreach ($expectedStatements as $subject => $subjectStatements) {
-			foreach ($subjectStatements as $predicate => $object) {
-				//
-			}
-		}
-		$this->verifyDomainProperty($resultingStatements);
-		$this->markTestIncomplete();
+		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'range', $resultingStatements[$columnSubject]);
+			// check if the blank node containing the owl:unionOf statement exists
+		$rangeNodeId = $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'];
+		$this->assertArrayHasKey($rangeNodeId, $resultingStatements);
+			// check if the range node has the correct statement
+		$this->assertArrayHasKey($this->prefixes['owl'] . 'unionOf', $resultingStatements[$rangeNodeId]);
+			// there is a chained list of nodes behind the unionOf statement; see
+			// Tx_RdfExport_Helper::convertArrayToRdfNodes() for more info
+		$firstChainedNodeId = $resultingStatements[$rangeNodeId][$this->prefixes['owl'] . 'unionOf'];
+		$this->assertArrayHasKey($this->prefixes['rdf'] . 'first', $resultingStatements[$firstChainedNodeId]);
+		$this->assertEquals($this->prefixes['t3ds'] . 'tt_content', $resultingStatements[$firstChainedNodeId][$this->prefixes['rdf'] . 'first']);
+
+		$this->verifyDomainProperty($resultingStatements[$columnSubject]);
 	}
 
 	/**
+	 * Tests if the mapping fails if an undefined column type is used.
 	 * @test
 	 */
 	public function mappingColumnDescriptionFailsForInvalidColumnType() {
@@ -223,6 +207,33 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		$column = $this->createMockedColumn(array('type' => 'input', 'eval' => uniqid()));
 
 		$this->fixture->mapColumnDescriptionToRdfDataType($column);
+	}
+
+	/**
+	 * @test
+	 */
+	public function columnIsMappedToBlankNodeByDefault() {
+		$column = $this->createMockedColumn(array('type' => 'input'));
+
+		list($subject, $statements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
+
+		$subject = array_shift(array_keys($statements));
+
+		$this->assertStringStartsWith('_:', $subject);
+	}
+
+	/**
+	 * @test
+	 */
+	public function columnMappingUsesGivenIdentifierForColumnNode() {
+		$columnConfiguration = $this->createMockedColumn(array('type' => 'input'));
+		$columnIdentifier = 'urn:' . uniqid();
+
+		list($subject, $statements) = $this->fixture->mapColumnDescriptionToRdfDataType($columnConfiguration, $columnIdentifier);
+
+		$subject = array_shift(array_keys($statements));
+
+		$this->assertEquals($columnIdentifier, $subject);
 	}
 }
 

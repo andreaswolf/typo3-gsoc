@@ -38,5 +38,6 @@ abstract class Tx_RdfExport_TestCase extends Tx_Phpunit_TestCase {
 		'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
 		'owl' => 'http://www.w3.org/2002/07/owl#',
 		't3ds' => 'http://typo3.org/semantic/datastructure/',
+		'xsd' => 'http://www.w3.org/2001/XMLSchema#'
 	);
 }

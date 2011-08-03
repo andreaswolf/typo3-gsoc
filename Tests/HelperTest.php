@@ -31,7 +31,7 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage
+ * @subpackage rdf_export
  */
 class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
@@ -100,7 +100,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			uniqid()
 		);
 
-		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+		list(, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
 
 		$subjects = array_keys($statements);
 		$this->assertStringStartsWith('_:', $subjects[0]);
@@ -118,7 +118,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			uniqid()
 		);
 
-		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+		list(, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
 
 		foreach ($statements as $statement) {
 			$this->assertContains($statement[$this->prefixes['rdf'] . 'first'], $input);
@@ -135,7 +135,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			uniqid()
 		);
 
-		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+		list(, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
 
 			// reverse map from array value to bnode identifier (= subject of the statement)
 		$valueMap = array();
@@ -162,7 +162,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			uniqid()
 		);
 
-		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+		list(, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
 
 		$lastValue = array_pop($input);
 		foreach ($statements as $statement) {
@@ -186,7 +186,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			uniqid()
 		);
 
-		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+		list(, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
 
 		$i = 0;
 		foreach ($statements as $statement) {

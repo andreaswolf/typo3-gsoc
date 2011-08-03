@@ -40,6 +40,7 @@ class Tx_RdfExport_Helper {
 		'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
 		'owl' => 'http://www.w3.org/2002/07/owl#',
 		't3ds' => 'http://typo3.org/semantic/datastructure/',
+		'xsd' => 'http://www.w3.org/2001/XMLSchema#'
 	);
 
 	public static function resolvePrefix($prefix) {
@@ -55,6 +56,17 @@ class Tx_RdfExport_Helper {
 		$fieldIdentifier = $fieldObject->getName();
 
 		return self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier;
+	}
+
+	/**
+	 * Returns a unique identifier for a database table.
+	 *
+	 * @static
+	 * @param $table
+	 * @return string
+	 */
+	public static function getRdfIdentifierForTable($table) {
+		return self::resolvePrefix('t3ds') . $table;
 	}
 
 	/**
@@ -86,6 +98,6 @@ class Tx_RdfExport_Helper {
 			$statements[$nodeIdentifier] = $statement;
 		}
 
-		return array_reverse($statements);
+		return array($previousNode, array_reverse($statements));
 	}
 }

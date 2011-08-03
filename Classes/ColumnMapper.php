@@ -36,10 +36,12 @@
  */
 class Tx_RdfExport_ColumnMapper {
 	/**
+	 * Maps a column description (e.g. from TCA) to RDF statements
+	 *
 	 * @param array $columnDescription
 	 * @return
 	 */
-	public function mapColumnDescriptionToRdfDataType(t3lib_DataStructure_Element_Field $column) {
+	public function mapColumnDescriptionToRdfDataType(t3lib_DataStructure_Element_Field $column, $columnNodeName = '') {
 		/**
 		 * - examine column configuration
 		 * - choose a type that fits
@@ -50,20 +52,56 @@ class Tx_RdfExport_ColumnMapper {
 		 */
 		$configuration = $column->getConfiguration();
 
-		$result = '';
+		$statements = array();
 		switch($configuration['type']) {
 			case 'input':
-				$result = $this->mapInputFieldToDataType($configuration);
+				$statements = $this->mapInputFieldToStatements($configuration);
 
 				break;
+
+			case 'text':
+				$statements = $this->mapTextFieldToStatements($configuration);
+
+				break;
+
+			case 'group':
+				switch ($configuration['internal_type']) {
+					case 'db':
+						$statements = $this->mapDatabaseRelationFieldToStatements($configuration);
+
+						break;
+
+					default:
+						throw new InvalidArgumentException('No mapping found for column of type "group", internal type "'
+						                                   . $configuration['internal_type'] . '".', 1312379153);
+				}
+
+				break;
+
 			default:
-				throw new InvalidArgumentException('No mapping found for column type ' . $configuration['type'], 1310670994);
+				throw new InvalidArgumentException('No mapping found for column type "' . $configuration['type'] . '".', 1310670994);
 		}
 
-		return $result;
+		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'domain'] = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure());
+
+			// rename the column node from the placeholder _ to the specified name
+		if ($columnNodeName == '') {
+			$columnNodeName = '_:' . uniqid();
+		}
+		$statements = array_merge(array($columnNodeName => $statements['_']), $statements);
+		unset($statements['_']);
+
+		return array($columnNodeName, $statements);
 	}
 
-	protected function mapInputFieldToDataType($configuration) {
+	/**
+	 * Maps a field of type "input" to RDF statements.
+	 *
+	 * @param array $configuration The column configuration
+	 * @return array Some statements describing the column (predicate as key, object as value)
+	 * @throws InvalidArgumentException If no mapping could be determined (i.e. the eval type is not supported)
+	 */
+	protected function mapInputFieldToStatements($configuration) {
 		$type = '';
 		$statements = array();
 
@@ -86,7 +124,50 @@ class Tx_RdfExport_ColumnMapper {
 			throw new InvalidArgumentException('No mapping found for input column.', 1310670995);
 		}
 
-		$statements['http://www.w3.org/1999/02/22-rdf-syntax-ns#type'] = $type;
+		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdf') . 'type'] = $type;
+
+		return $statements;
+	}
+
+	/**
+	 * Maps a field of type "text" to RDF statements.
+	 *
+	 * @param array $configuration The column configuration
+	 * @return array Some statements describing the column (predicate as key, object as value)
+	 */
+	protected function mapTextFieldToStatements($configuration) {
+		return array(
+			'_' => array(
+				Tx_RdfExport_Helper::resolvePrefix('rdf') . 'type' => 'http://www.w3.org/2001/XMLSchema#string'
+			)
+		);
+	}
+
+	/**
+	 * Maps a db relation field (type "group", internal type "db") to RDF statements
+	 *
+	 * @param array $configuration The column configuration
+	 * @return array Some statements describing the column (predicate as key, object as value)
+	 */
+	protected function mapDatabaseRelationFieldToStatements($configuration) {
+		$statements = array();
+
+		$tables = t3lib_div::trimExplode(',', $configuration['allowed']);
+
+		$tableIdentifiers = array();
+		foreach ($tables as $table) {
+			$tableIdentifiers[] = Tx_RdfExport_Helper::getRdfIdentifierForTable($table);
+		}
+
+		list($firstRangeNodeIdentifier, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($tableIdentifiers);
+
+		$rangeNodeIdentifier = '_:' . uniqid();
+		$statements[$rangeNodeIdentifier] = array(
+			Tx_RdfExport_Helper::resolvePrefix('owl') . 'unionOf' => $firstRangeNodeIdentifier
+		);
+		$statements['_'] = array(
+			Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'range' => $rangeNodeIdentifier
+		);
 
 		return $statements;
 	}
