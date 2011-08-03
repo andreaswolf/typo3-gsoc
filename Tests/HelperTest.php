@@ -33,7 +33,7 @@
  * @package TYPO3
  * @subpackage
  */
-class Tx_RdfExport_HelperTest extends Tx_Phpunit_TestCase {
+class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
 	protected $mockedField;
 	protected $mockedFieldName;

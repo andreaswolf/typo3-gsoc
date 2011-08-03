@@ -33,7 +33,7 @@
  * @package TYPO3
  * @subpackage 
  */
-class Tx_RdfExport_DataStructureExporterTest extends Tx_Phpunit_TestCase {
+class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 	/**
 	 * @var Tx_RdfExport_DataStructureExporter
 	 */

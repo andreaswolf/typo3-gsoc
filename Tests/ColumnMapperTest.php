@@ -34,7 +34,7 @@
  * @package TYPO3
  * @subpackage 
  */
-class Tx_RdfExport_ColumnMapperTest extends Tx_Phpunit_TestCase {
+class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 	/**
 	 * @var Tx_RdfExport_ColumnMapper
@@ -151,6 +151,9 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_Phpunit_TestCase {
 	/**
 	 * @test
 	 * @dataProvider primitiveTypesDataProvider
+	 *
+	 * @param array $columnConfiguration The configuration of the column to test
+	 * @param string $expectedDataType The RDF type expected for this column
 	 */
 	public function primitiveDataTypesAreCorrectlyMapped($columnConfiguration, $expectedDataType) {
 		$column = $this->createMockedColumn($columnConfiguration);
@@ -180,6 +183,10 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_Phpunit_TestCase {
 	/**
 	 * @test
 	 * @dataProvider relationColumnsDataProvider
+	 *
+	 * @param array $columnConfiguration The configuration for this column
+	 * @param array $expectedStatements The statements that should result from the mapping; note that there may be other
+	 *                                  statements than these in the mapping
 	 */
 	public function relationColumnsAreCorrectlyMapped($columnConfiguration, $expectedStatements) {
 		$column = $this->createMockedColumn($columnConfiguration);
