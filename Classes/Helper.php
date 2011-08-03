@@ -37,8 +37,8 @@
 class Tx_RdfExport_Helper {
 	protected static $prefixes = array(
 		'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-		'rdfs' => '',
-		'owl' => '',
+		'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
+		'owl' => 'http://www.w3.org/2002/07/owl#',
 		't3ds' => 'http://typo3.org/semantic/datastructure/',
 	);
 
