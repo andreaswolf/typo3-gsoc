@@ -56,4 +56,36 @@ class Tx_RdfExport_Helper {
 
 		return self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier;
 	}
+
+	/**
+	 * Converts an array to a chained structure of anonymous RDF nodes with rdf:first and rdf:rest properties.
+	 *
+	 * @static
+	 * @param array $sourceArray The array to convert
+	 * @return array Statements with the subject as the first-level key, predicates as the second-level key and objects as the values
+	 * @see http://www.w3.org/TR/2004/REC-rdf-primer-20040210/#collections
+	 */
+	public static function convertArrayToRdfNodes($sourceArray) {
+		$sourceArray = array_reverse($sourceArray);
+
+		$statements = array();
+		$previousNode = '';
+		foreach ($sourceArray as $entry) {
+			$nodeIdentifier = '_:' . uniqid();
+
+			$statement = array();
+			$statement[self::resolvePrefix('rdf') . 'first'] = $entry;
+
+			if ($previousNode == '') {
+				$statement[self::resolvePrefix('rdf') . 'rest'] = self::resolvePrefix('rdf') . 'nil';
+			} else {
+				$statement[self::resolvePrefix('rdf') . 'rest'] = $previousNode;
+			}
+
+			$previousNode = $nodeIdentifier;
+			$statements[$nodeIdentifier] = $statement;
+		}
+
+		return array_reverse($statements);
+	}
 }

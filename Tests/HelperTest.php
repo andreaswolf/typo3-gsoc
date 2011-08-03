@@ -91,5 +91,108 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 		$this->assertStringEndsWith($this->mockedDataStructureIdentifier . '#' . $this->mockedFieldName, $rdfIdentifier);
 	}
 
+	/**
+	 * @test
+	 */
+	public function convertArrayToRdfNodesGeneratesBlankNodeForEachEntry() {
+		$input = array(
+			uniqid(),
+			uniqid()
+		);
 
+		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+
+		$subjects = array_keys($statements);
+		$this->assertStringStartsWith('_:', $subjects[0]);
+		$this->assertStringStartsWith('_:', $subjects[1]);
+		$this->assertNotEquals($subjects[0], $subjects[1]);
+	}
+
+	/**
+	 * @test
+	 */
+	public function convertArrayToRdfNodesAddsValueAsRdfFirstStatement() {
+		$input = array(
+			uniqid(),
+			uniqid(),
+			uniqid()
+		);
+
+		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+
+		foreach ($statements as $statement) {
+			$this->assertContains($statement[$this->prefixes['rdf'] . 'first'], $input);
+		}
+	}
+
+	/**
+	 * @test
+	 */
+	public function convertArrayToRdfNodesCorrectlyChainsBlankNodes() {
+		$input = array(
+			uniqid(),
+			uniqid(),
+			uniqid()
+		);
+
+		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+
+			// reverse map from array value to bnode identifier (= subject of the statement)
+		$valueMap = array();
+		foreach ($statements as $subject => $statement) {
+			$value = $statement[$this->prefixes['rdf'] . 'first'];
+			$valueMap[$value] = $subject;
+		}
+
+			// ignore the last element here, because it will be no reference to a node, but rdf:nil
+		for ($i = 0; $i < count($input) - 1; ++$i) {
+			$subject = $valueMap[$input[$i]];
+			$rdfLastObject = $statements[$subject][$this->prefixes['rdf'] . 'rest'];
+			$this->assertEquals($valueMap[$input[$i+1]], $rdfLastObject);
+		}
+	}
+
+	/**
+	 * @test
+	 */
+	public function convertArrayToRdfNodesSetsNilForRdfRestInLastNode() {
+		$input = array(
+			uniqid(),
+			uniqid(),
+			uniqid()
+		);
+
+		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+
+		$lastValue = array_pop($input);
+		foreach ($statements as $statement) {
+			$value = $statement[$this->prefixes['rdf'] . 'first'];
+			if ($value == $lastValue) {
+				$this->assertEquals($this->prefixes['rdf'] . 'nil', $statement[$this->prefixes['rdf'] . 'rest']);
+			}
+		}
+	}
+
+	/**
+	 * This feature is not strictly required for RDF conformance, but it makes parsing the statements easier, as
+	 * they will appear in the order the original array was
+	 *
+	 * @test
+	 */
+	public function convertArrayToRdfNodesReturnsCorrectOrder() {
+		$input = array(
+			uniqid(),
+			uniqid(),
+			uniqid()
+		);
+
+		$statements = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
+
+		$i = 0;
+		foreach ($statements as $statement) {
+			$value = $statement[$this->prefixes['rdf'] . 'first'];
+			$this->assertEquals($input[$i], $value);
+			++$i;
+		}
+	}
 }
