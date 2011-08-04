@@ -186,6 +186,26 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	}
 
 	/**
+	 * @test
+	 */
+	public function databaseRelationColumnWithMultipleForeignTablesProducesCorrectResult() {
+		$allowedTables = array('tt_content', 'tt_news');
+		$column = $this->createMockedColumn(array(
+			'type' => 'group',
+			'internal_type' => 'db',
+			'allowed' => implode(',', $allowedTables)
+		));
+
+		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
+
+		$rangeNodeId = $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'];
+		$firstTableNodeId = $resultingStatements[$rangeNodeId][$this->prefixes['owl'] . 'unionOf'];
+		$this->assertStringEndsWith($allowedTables[0], $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'first']);
+		$secondTableNodeId = $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'rest'];
+		$this->assertStringEndsWith($allowedTables[1], $resultingStatements[$secondTableNodeId][$this->prefixes['rdf'] . 'first']);
+	}
+
+	/**
 	 * Tests if the mapping fails if an undefined column type is used.
 	 * @test
 	 */
