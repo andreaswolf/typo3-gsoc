@@ -124,7 +124,7 @@ class Tx_RdfExport_ColumnMapper {
 			throw new InvalidArgumentException('No mapping found for input column.', 1310670995);
 		}
 
-		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdf') . 'type'] = $type;
+		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'range'] = $type;
 
 		return $statements;
 	}
@@ -138,7 +138,7 @@ class Tx_RdfExport_ColumnMapper {
 	protected function mapTextFieldToStatements($configuration) {
 		return array(
 			'_' => array(
-				Tx_RdfExport_Helper::resolvePrefix('rdf') . 'type' => Tx_RdfExport_Helper::resolvePrefix('xsd') . 'string'
+				Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'range' => Tx_RdfExport_Helper::resolvePrefix('xsd') . 'string'
 			)
 		);
 	}

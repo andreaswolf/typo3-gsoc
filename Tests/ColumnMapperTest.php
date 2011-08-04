@@ -154,7 +154,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
 
-		$this->assertEquals($expectedDataType, $resultingStatements[$columnSubject][$this->prefixes['rdf'] . 'type']);
+		$this->assertEquals($expectedDataType, $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range']);
 		$this->verifyDomainProperty($resultingStatements[$columnSubject]);
 	}
 
