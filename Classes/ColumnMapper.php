@@ -106,17 +106,17 @@ class Tx_RdfExport_ColumnMapper {
 		$statements = array();
 
 		if (!isset($configuration['eval'])) {
-			$type = 'http://www.w3.org/2001/XMLSchema#string';
+			$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'string';
 		} else {
 			if (preg_match('/int/', $configuration['eval'])) {
 				// TODO add mapping for ranges here
-				$type = 'http://www.w3.org/2001/XMLSchema#integer';
+				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'integer';
 			} elseif (preg_match('/datetime/', $configuration['eval'])) {
-				$type = 'http://www.w3.org/2001/XMLSchema#dateTime';
+				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'dateTime';
 			} elseif (preg_match('/date/', $configuration['eval'])) {
-				$type = 'http://www.w3.org/2001/XMLSchema#date';
+				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'date';
 			} elseif (preg_match('/time|timesec/', $configuration['eval'])) {
-				$type = 'http://www.w3.org/2001/XMLSchema#time';
+				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'time';
 			}
 		}
 
@@ -138,7 +138,7 @@ class Tx_RdfExport_ColumnMapper {
 	protected function mapTextFieldToStatements($configuration) {
 		return array(
 			'_' => array(
-				Tx_RdfExport_Helper::resolvePrefix('rdf') . 'type' => 'http://www.w3.org/2001/XMLSchema#string'
+				Tx_RdfExport_Helper::resolvePrefix('rdf') . 'type' => Tx_RdfExport_Helper::resolvePrefix('xsd') . 'string'
 			)
 		);
 	}
