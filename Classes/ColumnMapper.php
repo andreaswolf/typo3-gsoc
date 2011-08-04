@@ -83,6 +83,7 @@ class Tx_RdfExport_ColumnMapper {
 		}
 
 		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'domain'] = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure());
+		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'subclassOf'] = Tx_RdfExport_Helper::resolvePrefix('rdf') . 'Property';
 
 			// rename the column node from the placeholder _ to the specified name
 		if ($columnNodeName == '') {

@@ -75,14 +75,16 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	}
 
 	/**
-	 * Generic verifier that checks for an rdfs:domain statement in an array of statements.
+	 * Checks for some properties that all column nodes should have, e.g. rdfs:domain and rdf:type
 	 *
 	 * @param $statements
 	 * @return void
 	 */
-	protected function verifyDomainProperty($statements) {
+	protected function verifyCommonColumnNodeProperties($statements) {
 		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'domain', $statements);
 		$this->assertEquals($this->prefixes['t3ds'] . $this->dataStructureIdentifier, $statements[$this->prefixes['rdfs'] . 'domain']);
+		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'subclassOf', $statements);
+		$this->assertEquals($this->prefixes['rdf'] . 'Property', $statements[$this->prefixes['rdfs'] . 'subclassOf']);
 	}
 
 	public function primitiveTypesDataProvider() {
@@ -155,7 +157,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
 
 		$this->assertEquals($expectedDataType, $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range']);
-		$this->verifyDomainProperty($resultingStatements[$columnSubject]);
+		$this->verifyCommonColumnNodeProperties($resultingStatements[$columnSubject]);
 	}
 
 	/**
@@ -182,7 +184,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		$this->assertArrayHasKey($this->prefixes['rdf'] . 'first', $resultingStatements[$firstChainedNodeId]);
 		$this->assertEquals($this->prefixes['t3ds'] . 'tt_content', $resultingStatements[$firstChainedNodeId][$this->prefixes['rdf'] . 'first']);
 
-		$this->verifyDomainProperty($resultingStatements[$columnSubject]);
+		$this->verifyCommonColumnNodeProperties($resultingStatements[$columnSubject]);
 	}
 
 	/**
@@ -203,6 +205,8 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		$this->assertStringEndsWith($allowedTables[0], $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'first']);
 		$secondTableNodeId = $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'rest'];
 		$this->assertStringEndsWith($allowedTables[1], $resultingStatements[$secondTableNodeId][$this->prefixes['rdf'] . 'first']);
+
+		$this->verifyCommonColumnNodeProperties($resultingStatements[$columnSubject]);
 	}
 
 	/**
