@@ -138,14 +138,8 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$resultingStatements = $this->fixture->exportDataStructure($this->dataStructureFixture);
 
 		$this->assertArrayHasKey($subject1, $resultingStatements);
-		foreach ($expectedStatements[$subject1] as $predicate => $object) {
-			$this->assertArrayHasKey($predicate, $resultingStatements[$subject1]);
-			$this->assertEquals($object, $resultingStatements[$subject1][$predicate]);
-		}
+		$this->assertIsSupersetOf($expectedStatements[$subject1], $resultingStatements[$subject1]);
 		$this->assertArrayHasKey($subject2, $resultingStatements);
-		foreach ($expectedStatements[$subject2] as $predicate => $object) {
-			$this->assertArrayHasKey($predicate, $resultingStatements[$subject2]);
-			$this->assertEquals($object, $resultingStatements[$subject2][$predicate]);
-		}
+		$this->assertIsSupersetOf($expectedStatements[$subject2], $resultingStatements[$subject2]);
 	}
 }

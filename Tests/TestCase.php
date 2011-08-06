@@ -41,4 +41,12 @@ abstract class Tx_RdfExport_TestCase extends Tx_Phpunit_TestCase {
 		't3ds' => 'http://typo3.org/semantic/datastructure/',
 		'xsd' => 'http://www.w3.org/2001/XMLSchema#'
 	);
+
+	public function assertIsSupersetOf($expectedSubset, $superset) {
+		foreach ($expectedSubset as $key => $value) {
+			if (!array_key_exists($key, $superset) || $superset[$key] !== $value) {
+				$this->fail(sprintf("Failed asserting that\n%s\nis a superset of\n%s", print_r($superset, TRUE), print_r($expectedSubset, TRUE)));
+			}
+		}
+	}
 }
