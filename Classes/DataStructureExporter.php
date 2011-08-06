@@ -70,6 +70,11 @@ class Tx_RdfExport_DataStructureExporter {
 	 */
 	protected $columnMapper;
 
+	/**
+	 * @var array
+	 */
+	protected $statements = array();
+
 
 	public function __construct($table) {
 		$this->table = $table;
@@ -123,16 +128,17 @@ class Tx_RdfExport_DataStructureExporter {
 	 * Exports a table definiton (from the TYPO3 Table Configuration Array) as RDF-Schema
 	 *
 	 * @param  $table
-	 * @return void
+	 * @return array The statements that represent the data structure
 	 */
 	public function exportDataStructure(t3lib_DataStructure_Abstract $dataStructureObject) {
+		$this->statements = array();
 		// TODO import relevant Ontologies here if neccessary; or do this during initalization
 		/** @var $RdfParser \Erfurt\Syntax\RdfParser */
 		//$RdfParser = $this->objectManager->get('\Erfurt\Syntax\RdfParser', 'rdfxml');
 		//$RdfParser->initializeObject();
 		//$parsedOntology = $RdfParser->parseToStore('/tmp/typo3tables.rdf', \Erfurt\Syntax\RdfParser::LOCATOR_FILE, 'http://typo3.org');
 
-		$this->addDataStructureMetadataStatementsToStore($dataStructureObject);
+		$this->mapDataStructureMetadataToStatements($dataStructureObject);
 
 			// Looping over all fields, exporting them to triples
 		foreach ($dataStructureObject->getFieldNames() as $fieldName) {
@@ -145,20 +151,22 @@ class Tx_RdfExport_DataStructureExporter {
 				// handle exception: column could not be mapped
 			}
 
-			$this->graph->addMultipleStatements($statements);
+			$this->addMultipleStatements($statements);
 		}
 
 		// check here if any columns could not be mapped, TODO decide how this will be handled
+
+		return $this->statements;
 	}
 
-	protected function addDataStructureMetadataStatementsToStore(t3lib_DataStructure_Abstract $dataStructureObject) {
+	protected function mapDataStructureMetadataToStatements(t3lib_DataStructure_Abstract $dataStructureObject) {
 		$table = $dataStructureObject->getIdentifier();
 
 		if ($dataStructureObject->hasControlValue('crdate')) {
 			$columnName = $dataStructureObject->getControlValue('crdate');
 			$subject = $this->graphBaseUri . $this->table . '.' . $columnName;
 
-			$this->graph->addMultipleStatements(array(
+			$this->addMultipleStatements(array(
 				$subject => array(
 					'rdf:type' => 'rdf:property',
 					'rdfs:subPropertyOf' => 'dcterms:created', // TODO can sameAs be used for properties? Should it be used here?
@@ -166,6 +174,21 @@ class Tx_RdfExport_DataStructureExporter {
 			));
 		}
 		//
+	}
+
+	protected function addStatement($subject, $predicate, $object) {
+		$subject = Tx_RdfExport_Helper::canonicalize($subject);
+		$predicate = Tx_RdfExport_Helper::canonicalize($predicate);
+		$object = Tx_RdfExport_Helper::canonicalize($object);
+		$this->statements = t3lib_div::array_merge_recursive_overrule($this->statements, array($subject => array($predicate => $object)));
+	}
+
+	protected function addMultipleStatements($statements) {
+		foreach ($statements as $subject => $subjectStatements) {
+			foreach ($subjectStatements as $predicate => $object) {
+				$this->addStatement($subject, $predicate, $object);
+			}
+		}
 	}
 }
 

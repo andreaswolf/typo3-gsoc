@@ -83,26 +83,13 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 	/**
 	 * @test
 	 */
-	public function exporterContainsGraphObjectAfterInitialization() {
-		$this->fixture->setGraph($this->getMockedGraph());
-		$this->fixture->initializeObject();
-		$this->assertInternalType('object', $this->fixture->getGraph());
-		$this->assertInstanceOf('\Erfurt\Domain\Model\Rdf\Graph', $this->fixture->getGraph());
-	}
-
-	/**
-	 * @test
-	 */
 	public function noTriplesAreAddedForEmptyTca() {
 		$tca = array('ctrl' => array(), 'columns' => array());
 		$this->createFakeDataStructureObject($tca);
 		$this->fixture->setGraph($this->getMockedGraph());
-		$this->fixture->exportDataStructure($this->dataStructureFixture);
+		$statements = $this->fixture->exportDataStructure($this->dataStructureFixture);
 
-		$graphStore = $this->fixture->getGraphStore();
-		$graph = $this->fixture->getGraph();
-
-		$this->assertEquals(0, count($graph->getMatchingStatements(NULL, NULL, NULL)));
+		$this->assertEmpty($statements);
 	}
 
 	/**
@@ -112,30 +99,17 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$tca = array('ctrl' => array('crdate' => uniqid()), 'columns' => array());
 		$this->createFakeDataStructureObject($tca);
 
-		/** @var $graph \Erfurt\Domain\Model\Rdfs\Graph */
-		$graph = $this->getMockedGraph();
-		$graph->expects($this->once())->method('addMultipleStatements')
-		      ->will($this->returnCallback(array($this, 'tripleForCreationDateIsAddedIfTableHasCreationDate_checkParametersCallback')));
+		$expectedStatements = array(
+			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdf'] . 'property',
+			$this->prefixes['rdfs'] . 'subPropertyOf' => $this->prefixes['dcterms'] . 'created', // TODO replace dcterms with real namespace
+		);
 
-		$this->fixture->setGraph($graph);
-		$this->fixture->initializeObject();
+		$resultingStatements = $this->fixture->exportDataStructure($this->dataStructureFixture);
 
-		$this->fixture->exportDataStructure($this->dataStructureFixture);
-
-		// all assertions are done in the callback below
-	}
-
-	public function tripleForCreationDateIsAddedIfTableHasCreationDate_checkParametersCallback() {
-		$args = func_get_args();
-		$statements = $args[0];
-		$predicates = array_shift(array_values($statements));
 		$fieldName = $this->dataStructureTcaFixture['ctrl']['crdate'];
-
-		$this->assertStringEndsWith($this->tableName . '.' . $fieldName, array_shift(array_keys($statements)));
-		$this->assertArrayHasKey('rdf:type', $predicates);
-		$this->assertEquals('rdf:property', $predicates['rdf:type']);
-		$this->assertArrayHasKey('rdfs:subPropertyOf', $predicates);
-		$this->assertEquals('dcterms:created', $predicates['rdfs:subPropertyOf']);
+		$subject = array_shift(array_keys($resultingStatements));
+		$this->assertStringEndsWith($this->tableName . '.' . $fieldName, $subject);
+		$this->assertIsSupersetOf($expectedStatements, $resultingStatements[$subject]);
 	}
 
 	/**
@@ -145,24 +119,33 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 	public function statementsFromColumnMapperAreAddedAfterMapping() {
 		$this->createFakeDataStructureObject(array('columns' => array('someColumn' => array())));
 
+		$subject1 = uniqid(); $subject2 = uniqid();
 		$expectedStatements = array(
-			uniqid() => array(
+			$subject1 => array(
+				uniqid() => uniqid(),
+				uniqid() => uniqid()
+			),
+			$subject2 => array(
 				uniqid() => uniqid(),
 				uniqid() => uniqid()
 			)
 		);
 
-		/** @var $graph \Erfurt\Domain\Model\Rdfs\Graph */
-		$graph = $this->getMockedGraph();
-		$graph->expects($this->once())->method('addMultipleStatements')
-		      ->with($expectedStatements);
 		$mockedColumnMapper = $this->getMock('Tx_RdfExport_ColumnMapper');
 		$mockedColumnMapper->expects($this->once())->method('mapColumnDescriptionToRdfDataType')->will($this->returnValue($expectedStatements));
-
-		$this->fixture->setGraph($graph);
 		$this->fixture->setColumnMapper($mockedColumnMapper);
-		$this->fixture->initializeObject();
 
-		$this->fixture->exportDataStructure($this->dataStructureFixture);
+		$resultingStatements = $this->fixture->exportDataStructure($this->dataStructureFixture);
+
+		$this->assertArrayHasKey($subject1, $resultingStatements);
+		foreach ($expectedStatements[$subject1] as $predicate => $object) {
+			$this->assertArrayHasKey($predicate, $resultingStatements[$subject1]);
+			$this->assertEquals($object, $resultingStatements[$subject1][$predicate]);
+		}
+		$this->assertArrayHasKey($subject2, $resultingStatements);
+		foreach ($expectedStatements[$subject2] as $predicate => $object) {
+			$this->assertArrayHasKey($predicate, $resultingStatements[$subject2]);
+			$this->assertEquals($object, $resultingStatements[$subject2][$predicate]);
+		}
 	}
 }

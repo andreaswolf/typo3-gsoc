@@ -36,12 +36,28 @@
  */
 class Tx_RdfExport_Helper {
 	protected static $prefixes = array(
+		'dcterms' => 'http://purl.org/dc/terms/',
 		'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
 		'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
 		'owl' => 'http://www.w3.org/2002/07/owl#',
 		't3ds' => 'http://typo3.org/semantic/datastructure/',
 		'xsd' => 'http://www.w3.org/2001/XMLSchema#'
 	);
+
+	public static function canonicalize($identifier) {
+		if (strpos($identifier, ':') > 0) {
+			$prefix = substr($identifier, 0, strpos($identifier, ':') );
+			if (self::isDefinedPrefix($prefix)) {
+				$identifier = Tx_RdfExport_Helper::resolvePrefix($prefix) . substr($identifier, strpos($identifier, ':') + 1);
+			}
+		}
+
+		return $identifier;
+	}
+
+	public static function isDefinedPrefix($prefix) {
+		return array_key_exists($prefix, self::$prefixes);
+	}
 
 	public static function resolvePrefix($prefix) {
 		return self::$prefixes[$prefix];

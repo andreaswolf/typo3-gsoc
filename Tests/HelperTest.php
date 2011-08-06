@@ -195,4 +195,33 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			++$i;
 		}
 	}
+
+	/**
+	 * @test
+	 */
+	public function canonicalizeReturnsIdentifierWithResolvedPrefix() {
+		$localPart = uniqid();
+
+		$canonicalizedIdentifier = Tx_RdfExport_Helper::canonicalize('rdf:' . $localPart);
+
+		$this->assertEquals($this->prefixes['rdf'] . $localPart, $canonicalizedIdentifier);
+	}
+
+	/**
+	 * @test
+	 */
+	public function canonicalizeReturnsUnchangedIdentifierIfPrefixIsAlreadyResolved() {
+		$identifier = $this->prefixes['rdf'] . uniqid();
+
+		$this->assertEquals($identifier, Tx_rdfExport_Helper::canonicalize($identifier));
+	}
+
+	/**
+	 * @test
+	 */
+	public function canonicalizeIgnoresUnknownIdentifier() {
+		$identifier = uniqid() . ':' . uniqid();
+
+		$this->assertEquals($identifier, Tx_rdfExport_Helper::canonicalize($identifier));
+	}
 }
