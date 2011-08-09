@@ -51,6 +51,7 @@ class Tx_RdfExport_ColumnMapper {
 		 *  - find out if any kind of automagic conversion might make sense here
 		 */
 		$configuration = $column->getConfiguration();
+		$configuration = $configuration['config'];
 
 		$statements = array();
 		switch($configuration['type']) {
@@ -89,7 +90,7 @@ class Tx_RdfExport_ColumnMapper {
 		if ($columnNodeName == '') {
 			$columnNodeName = '_:' . uniqid();
 		}
-		$statements = array_merge(array($columnNodeName => $statements['_']), $statements);
+		$statements[$columnNodeName] = $statements['_'];
 		unset($statements['_']);
 
 		return array($columnNodeName, $statements);

@@ -68,7 +68,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		$dataStructure->expects($this->any())->method('getIdentifier')->will($this->returnValue($this->dataStructureIdentifier));
 
 		$column = $this->getMock('t3lib_DataStructure_Element_Field', array('getConfiguration'), array($this->columnName));
-		$column->expects($this->any())->method('getConfiguration')->will($this->returnValue($columnConfiguration));
+		$column->expects($this->any())->method('getConfiguration')->will($this->returnValue(array('config' => $columnConfiguration)));
 		//$column->expects($this->any())->method('getDataStructure')->will($this->returnValue($dataStructure));
 		$column->setDataStructure($dataStructure);
 		return $column;

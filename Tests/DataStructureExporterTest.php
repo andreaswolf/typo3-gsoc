@@ -132,7 +132,7 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		);
 
 		$mockedColumnMapper = $this->getMock('Tx_RdfExport_ColumnMapper');
-		$mockedColumnMapper->expects($this->once())->method('mapColumnDescriptionToRdfDataType')->will($this->returnValue($expectedStatements));
+		$mockedColumnMapper->expects($this->once())->method('mapColumnDescriptionToRdfDataType')->will($this->returnValue(array('', $expectedStatements)));
 		$this->fixture->setColumnMapper($mockedColumnMapper);
 
 		$resultingStatements = $this->fixture->exportDataStructure($this->dataStructureFixture);
