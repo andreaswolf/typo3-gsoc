@@ -83,8 +83,9 @@ class Tx_RdfExport_ColumnMapper {
 				throw new InvalidArgumentException('No mapping found for column type "' . $configuration['type'] . '".', 1310670994);
 		}
 
-		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'domain'] = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure());
-		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'subclassOf'] = Tx_RdfExport_Helper::resolvePrefix('rdf') . 'Property';
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:domain')] = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure());
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:subclassOf')] = Tx_RdfExport_Helper::canonicalize('rdf:Property');
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdf:type')] = Tx_RdfExport_Helper::canonicalize('rdf:Class');
 
 			// rename the column node from the placeholder _ to the specified name
 		if ($columnNodeName == '') {
@@ -108,17 +109,17 @@ class Tx_RdfExport_ColumnMapper {
 		$statements = array();
 
 		if (!isset($configuration['eval'])) {
-			$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'string';
+			$type = Tx_RdfExport_Helper::canonicalize('xsd:string');
 		} else {
 			if (preg_match('/int/', $configuration['eval'])) {
 				// TODO add mapping for ranges here
-				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'integer';
+				$type = Tx_RdfExport_Helper::canonicalize('xsd:integer');
 			} elseif (preg_match('/datetime/', $configuration['eval'])) {
-				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'dateTime';
+				$type = Tx_RdfExport_Helper::canonicalize('xsd:dateTime');
 			} elseif (preg_match('/date/', $configuration['eval'])) {
-				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'date';
+				$type = Tx_RdfExport_Helper::canonicalize('xsd:date');
 			} elseif (preg_match('/time|timesec/', $configuration['eval'])) {
-				$type = Tx_RdfExport_Helper::resolvePrefix('xsd') . 'time';
+				$type = Tx_RdfExport_Helper::canonicalize('xsd:time');
 			}
 		}
 
@@ -126,7 +127,7 @@ class Tx_RdfExport_ColumnMapper {
 			throw new InvalidArgumentException('No mapping found for input column.', 1310670995);
 		}
 
-		$statements['_'][Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'range'] = $type;
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:range')] = $type;
 
 		return $statements;
 	}
@@ -140,7 +141,7 @@ class Tx_RdfExport_ColumnMapper {
 	protected function mapTextFieldToStatements($configuration) {
 		return array(
 			'_' => array(
-				Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'range' => Tx_RdfExport_Helper::resolvePrefix('xsd') . 'string'
+				Tx_RdfExport_Helper::canonicalize('rdfs:range') => Tx_RdfExport_Helper::canonicalize('xsd:string')
 			)
 		);
 	}
@@ -165,10 +166,10 @@ class Tx_RdfExport_ColumnMapper {
 
 		$rangeNodeIdentifier = '_:' . uniqid();
 		$statements[$rangeNodeIdentifier] = array(
-			Tx_RdfExport_Helper::resolvePrefix('owl') . 'unionOf' => $firstRangeNodeIdentifier
+			Tx_RdfExport_Helper::canonicalize('owl:unionOf') => $firstRangeNodeIdentifier
 		);
 		$statements['_'] = array(
-			Tx_RdfExport_Helper::resolvePrefix('rdfs') . 'range' => $rangeNodeIdentifier
+			Tx_RdfExport_Helper::canonicalize('rdfs:range') => $rangeNodeIdentifier
 		);
 
 		return $statements;
