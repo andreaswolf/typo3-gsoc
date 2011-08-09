@@ -81,7 +81,7 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 
 		$statements = $exporter->exportDataStructure($dataStructure);
 
-		return print_r($statements, TRUE);
+		$this->view->assign('statements', $statements);
 	}
 
 	/**
