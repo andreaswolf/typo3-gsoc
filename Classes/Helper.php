@@ -45,8 +45,8 @@ class Tx_RdfExport_Helper {
 	);
 
 	public static function canonicalize($identifier) {
-		if (strpos($identifier, ':') > 0) {
-			$prefix = substr($identifier, 0, strpos($identifier, ':') );
+		if (strpos($identifier, ':') > 0 && $identifier{0} !== '_') {
+			$prefix = substr($identifier, 0, strpos($identifier, ':'));
 			if (self::isDefinedPrefix($prefix)) {
 				$identifier = Tx_RdfExport_Helper::resolvePrefix($prefix) . substr($identifier, strpos($identifier, ':') + 1);
 			}

@@ -199,7 +199,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 	/**
 	 * @test
 	 */
-	public function canonicalizeReturnsIdentifierWithResolvedPrefix() {
+	public function canonicalizeReturnsIdentifierWithResolvedPrefixAndAsUri() {
 		$localPart = uniqid();
 
 		$canonicalizedIdentifier = Tx_RdfExport_Helper::canonicalize('rdf:' . $localPart);
@@ -219,8 +219,17 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 	/**
 	 * @test
 	 */
-	public function canonicalizeIgnoresUnknownIdentifier() {
+	public function canonicalizeIgnoresUnknownPrefix() {
 		$identifier = uniqid() . ':' . uniqid();
+
+		$this->assertEquals($identifier, Tx_rdfExport_Helper::canonicalize($identifier));
+	}
+
+	/**
+	 * @test
+	 */
+	public function canonicalizeDoesNotChangeBlankNodeIdentifiers() {
+		$identifier = '_:' . uniqid('foobar');
 
 		$this->assertEquals($identifier, Tx_rdfExport_Helper::canonicalize($identifier));
 	}
