@@ -138,6 +138,16 @@ class Tx_RdfExport_DataStructureExporter {
 		//$RdfParser->initializeObject();
 		//$parsedOntology = $RdfParser->parseToStore('/tmp/typo3tables.rdf', \Erfurt\Syntax\RdfParser::LOCATOR_FILE, 'http://typo3.org');
 
+		if ($dataStructureObject->hasTypeField()) {
+			$types = $dataStructureObject->getAvailableTypes();
+			foreach ($types as $type) {
+				$typeObject = $dataStructureObject->getTypeObject($type);
+				$this->mapTypeObjectToStatements($dataStructureObject, $typeObject);
+			}
+		} else {
+			// TODO get default type, export it
+		}
+
 		$this->mapDataStructureMetadataToStatements($dataStructureObject);
 
 			// Looping over all fields, exporting them to triples
@@ -175,6 +185,26 @@ class Tx_RdfExport_DataStructureExporter {
 			));
 		}
 		//
+	}
+
+	protected function mapTypeObjectToStatements(t3lib_DataStructure_Abstract $dataStructure, t3lib_DataStructure_Type $typeObject) {
+		$typeUri = Tx_RdfExport_Helper::getRdfIdentifierForType($dataStructure, $typeObject);
+
+		$this->addStatement($typeUri, 'rdf:type', 'rdfs:Class');
+		$this->addStatement($typeUri, 'rdf:subclassOf', 't3ds:ContentType');
+		$this->addStatement($typeUri, 'rdfs:comment', sprintf('Type %s in data structure %s', $typeObject->getIdentifier(), $dataStructure->getIdentifier()));
+
+		$fieldNamesBlankNodeId = Tx_RdfExport_Helper::generateBlankNodeId();
+		$this->addStatement($typeUri, 't3ds:fields', $fieldNamesBlankNodeId);
+		$this->addStatement($fieldNamesBlankNodeId, 'rdf:type', 'rdf:Bag');
+
+		$i = 0;
+		foreach ($typeObject->getFieldNames() as $fieldName) {
+			++$i;
+
+			$fieldObject = $dataStructure->getFieldObject($fieldName);
+			$this->addStatement($fieldNamesBlankNodeId, 'rdf:_' . $i, Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject));
+		}
 	}
 
 	protected function addStatement($subject, $predicate, $object) {

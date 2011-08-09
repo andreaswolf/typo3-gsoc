@@ -67,11 +67,19 @@ class Tx_RdfExport_Helper {
 		return self::$prefixes['t3ds'] . $dataStructure->getIdentifier();
 	}
 
+	public static function getRdfIdentifierForType(t3lib_DataStructure_Abstract $dataStructure, t3lib_DataStructure_Type $type) {
+		return self::$prefixes['t3ds'] . $dataStructure->getIdentifier() . '-' . $type->getIdentifier();
+	}
+
 	public static function getRdfIdentifierForField(t3lib_DataStructure_Element_Field $fieldObject) {
 		$dataStructure = $fieldObject->getDataStructure();
 		$fieldIdentifier = $fieldObject->getName();
 
 		return self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier;
+	}
+
+	public static function generateBlankNodeId() {
+		return uniqid('_:bNode');
 	}
 
 	/**

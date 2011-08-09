@@ -233,4 +233,11 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
 		$this->assertEquals($identifier, Tx_rdfExport_Helper::canonicalize($identifier));
 	}
+
+	/**
+	 * @test
+	 */
+	public function generateBlankNodeIdUsesCorrectPrefix() {
+		$this->assertStringStartsWith('_:bNode', Tx_RdfExport_Helper::generateBlankNodeId());
+	}
 }

@@ -81,6 +81,32 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 	}
 
 	/**
+	 * Creates a mocked type object, mocking the method getIdentifier()
+	 *
+	 * @param mixed $typeValue
+	 * @return t3lib_DataStructure_Type
+	 */
+	protected function getMockedType($typeValue) {
+		$mockedType = $this->getMock('t3lib_DataStructure_Type', array(), array(), '', FALSE);
+		$mockedType->expects($this->any())->method('getIdentifier')->will($this->returnValue($typeValue));
+		return $mockedType;
+	}
+
+	/**
+	 * Mocks a field object, with a return value for getName() and getDataStructure, if given
+	 *
+	 * @return t3lib_DataStructure_Element_Field
+	 */
+	protected function getMockedField($fieldName, $dataStructure = NULL) {
+		$mockedField = $this->getMock('t3lib_DataStructure_Element_Field', array(), array(), '', FALSE);
+		$mockedField->expects($this->any())->method('getName')->will($this->returnValue($fieldName));
+		if ($dataStructure) {
+			$mockedField->expects($this->any())->method('getDataStructure')->will($this->returnValue($dataStructure));
+		}
+		return $mockedField;
+	}
+
+	/**
 	 * @test
 	 */
 	public function noTriplesAreAddedForEmptyTca() {
@@ -141,5 +167,98 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$this->assertIsSupersetOf($expectedStatements[$subject1], $resultingStatements[$subject1]);
 		$this->assertArrayHasKey($subject2, $resultingStatements);
 		$this->assertIsSupersetOf($expectedStatements[$subject2], $resultingStatements[$subject2]);
+	}
+
+	/**
+	 * @test
+	 */
+	public function typeGetsMappedToInstanceOfContentObjectClass() {
+		$dataStructureIdentifier = uniqid();$typeIdentifier = uniqid();
+		$mockedType = $this->getMockedType($typeIdentifier);
+		$mockedDataStructure = $this->getMock('t3lib_DataStructure_Tca');
+		$mockedDataStructure->expects($this->any())->method('hasTypeField')->will($this->returnValue(TRUE));
+		$mockedDataStructure->expects($this->any())->method('getAvailableTypes')->will($this->returnValue(array($typeIdentifier)));
+		$mockedDataStructure->expects($this->any())->method('getTypeObject')->will($this->returnValue($mockedType));
+		$mockedDataStructure->expects($this->any())->method('getIdentifier')->will($this->returnValue($dataStructureIdentifier));
+
+		$expectedStatements = array(
+			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdfs'] . 'Class',
+			$this->prefixes['rdf'] . 'subclassOf' => $this->prefixes['t3ds'] . 'ContentType'
+		);
+
+		$statements = $this->fixture->exportDataStructure($mockedDataStructure);
+
+		$key = Tx_RdfExport_Helper::getRdfIdentifierForType($mockedDataStructure, $mockedType);
+		$this->assertIsSupersetOf($expectedStatements, $statements[$key]);
+	}
+
+	/**
+	 * @test
+	 */
+	public function allTypesFromDataStructureAreExported() {
+		$typeValues = array('foo', 'bar', 3);
+		$dataStructureIdentifier = uniqid();
+		$mockedDataStructure = $this->getMock('t3lib_DataStructure_Tca');
+		$mockedDataStructure->expects($this->any())->method('hasTypeField')->will($this->returnValue(TRUE));
+		$mockedDataStructure->expects($this->any())->method('getIdentifier')->will($this->returnValue($dataStructureIdentifier));
+		$mockedDataStructure->expects($this->any())->method('getAvailableTypes')->will($this->returnValue($typeValues));
+
+		$typeObjects = array();
+		foreach ($typeValues as $typeValue) {
+			$typeObjects[] = $this->getMockedType($typeValue);
+		}
+		$mockedDataStructure->expects($this->exactly(3))->method('getTypeObject')->will($this->onConsecutiveCalls(
+			$this->returnValue($typeObjects[0]),
+			$this->returnValue($typeObjects[1]),
+			$this->returnValue($typeObjects[2])
+		));
+
+		$statements = $this->fixture->exportDataStructure($mockedDataStructure);
+
+		$i = 0;
+		foreach ($typeValues as $type) {
+			$typeIdentifier = Tx_RdfExport_Helper::getRdfIdentifierForType($mockedDataStructure, $typeObjects[$i]);
+			$this->assertArrayHasKey($typeIdentifier, $statements);
+			$this->assertNotEmpty($statements[$typeIdentifier]);
+
+			++$i;
+		}
+	}
+
+	/**
+	 * @test
+	 */
+	public function exportedTypeContainsReferencesToFields() {
+		$fields = array(uniqid(), uniqid());
+
+		$typeValue = uniqid();
+		$mockedType = $this->getMockedType($typeValue);
+		$mockedType->expects($this->any())->method('getFieldNames')->will($this->returnValue($fields));
+
+		$dataStructureIdentifier = uniqid();
+		$mockedDataStructure = $this->getMock('t3lib_DataStructure_Tca');
+		$mockedDataStructure->expects($this->any())->method('hasTypeField')->will($this->returnValue(TRUE));
+		$mockedDataStructure->expects($this->any())->method('getIdentifier')->will($this->returnValue($dataStructureIdentifier));
+		$mockedDataStructure->expects($this->any())->method('getAvailableTypes')->will($this->returnValue(array($typeValue)));
+		$mockedDataStructure->expects($this->any())->method('getTypeObject')->will($this->returnValue($mockedType));
+		$mockedField1 = $this->getMockedField($fields[0], $mockedDataStructure);
+		$mockedField2 = $this->getMockedField($fields[1], $mockedDataStructure);
+		$mockedDataStructure->expects($this->exactly(2))->method('getFieldObject')->will($this->onConsecutiveCalls($mockedField1, $mockedField2));
+
+		$statements = $this->fixture->exportDataStructure($mockedDataStructure);
+
+		foreach ($statements as $subject => $subjectStatements) {
+			if (array_key_exists($this->canonicalize('rdf:subclassOf'), $subjectStatements)
+			  && $subjectStatements[$this->canonicalize('rdf:subclassOf')] == $this->canonicalize('t3ds:ContentType')) {
+				$fieldNodeId = $subjectStatements[$this->canonicalize('t3ds:fields')];
+			}
+		}
+		if (!$fieldNodeId) {
+			$this->fail('Could not find t3ds:ContentType node in output');
+		}
+
+		$this->assertEquals($this->prefixes['rdf'] . 'Bag', $statements[$fieldNodeId][$this->prefixes['rdf'] . 'type']);
+		$this->assertEquals(Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField1), $statements[$fieldNodeId][$this->prefixes['rdf'] . '_1']);
+		$this->assertEquals(Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField2), $statements[$fieldNodeId][$this->prefixes['rdf'] . '_2']);
 	}
 }
