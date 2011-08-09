@@ -3,9 +3,26 @@ if (!defined('TYPO3_MODE')) {
 	die ('Access denied.');
 }
 
-if (TYPO3_MODE == 'BE') {
-	t3lib_extMgm::addModulePath('tools_txrdfexportM1', t3lib_extMgm::extPath($_EXTKEY) . 'mod1/');
-		
-	t3lib_extMgm::addModule('tools', 'txrdfexportM1', '', t3lib_extMgm::extPath($_EXTKEY) . 'mod1/');
+
+if (TYPO3_MODE == 'BE' && !(TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_INSTALL)) {
+	/**
+	* Registers a Backend Module
+	*/
+	Tx_Extbase_Utility_Extension::registerModule(
+		$_EXTKEY,
+		'tools',    // Make module a submodule of 'tools'
+		'rdfexport',    // Submodule key
+		'', // Position
+		array(
+				// An array holding the controller-action-combinations that are accessible
+			'Export'        => 'index'
+		),
+		array(
+			'access' => 'admin',
+			'icon'   => 'EXT:'.$_EXTKEY.'/Resources/Public/Images/cube-16.png',
+			'labels' => 'LLL:EXT:' . $_EXTKEY . '/Resources/Private/Language/locallang_mod.xml'
+		)
+	);
+
 }
 ?>

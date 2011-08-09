@@ -6,6 +6,7 @@ $extensionPath = t3lib_extMgm::extPath('rdf_export');
 $extensionClassesPath = t3lib_extMgm::extPath('rdf_export') . 'Classes/';
 return array(
 	'tx_rdfexport_columnmapper' => $extensionClassesPath . 'ColumnMapper.php',
+	'tx_rdfexport_controller_exportcontroller' => $extensionClassesPath . 'Controller/ExportController.php',
 	'tx_rdfexport_datastructureexporter' => $extensionClassesPath . 'DataStructureExporter.php',
 	'tx_rdfexport_helper' => $extensionClassesPath . 'Helper.php',
 	'tx_rdfexport_model_ontology' => $extensionClassesPath . 'Model/Ontology.php',
