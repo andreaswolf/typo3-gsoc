@@ -146,8 +146,9 @@ class Tx_RdfExport_DataStructureExporter {
 
 			$statements = array();
 			try {
-				$statements = $this->columnMapper->mapColumnDescriptionToRdfDataType($fieldObject);
-			} catch (RuntimeException $e) {
+				$columnNodeName = Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject);
+				list(, $statements) = $this->columnMapper->mapColumnDescriptionToRdfDataType($fieldObject, $columnNodeName);
+			} catch (InvalidArgumentException $e) {
 				// handle exception: column could not be mapped
 			}
 
