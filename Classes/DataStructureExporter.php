@@ -175,12 +175,13 @@ class Tx_RdfExport_DataStructureExporter {
 
 		if ($dataStructureObject->hasControlValue('crdate')) {
 			$columnName = $dataStructureObject->getControlValue('crdate');
-			$subject = $this->graphBaseUri . $this->table . '.' . $columnName;
+			$columnObject =  $dataStructureObject->getFieldObject($columnName);
+			$subject = Tx_RdfExport_Helper::getRdfIdentifierForField($columnObject);
 
 			$this->addMultipleStatements(array(
 				$subject => array(
-					'rdf:type' => 'rdf:property',
-					'rdfs:subPropertyOf' => 'dcterms:created', // TODO can sameAs be used for properties? Should it be used here?
+					'rdf:type' => 'rdf:Property',
+					'owl:sameAs' => 'dcterms:created',
 				)
 			));
 		}
@@ -191,11 +192,11 @@ class Tx_RdfExport_DataStructureExporter {
 		$typeUri = Tx_RdfExport_Helper::getRdfIdentifierForType($dataStructure, $typeObject);
 
 		$this->addStatement($typeUri, 'rdf:type', 'rdfs:Class');
-		$this->addStatement($typeUri, 'rdf:subclassOf', 't3ds:ContentType');
+		$this->addStatement($typeUri, 'rdf:subclassOf', 't3o:ContentType');
 		$this->addStatement($typeUri, 'rdfs:comment', sprintf('Type %s in data structure %s', $typeObject->getIdentifier(), $dataStructure->getIdentifier()));
 
 		$fieldNamesBlankNodeId = Tx_RdfExport_Helper::generateBlankNodeId();
-		$this->addStatement($typeUri, 't3ds:fields', $fieldNamesBlankNodeId);
+		$this->addStatement($typeUri, 't3o:fields', $fieldNamesBlankNodeId);
 		$this->addStatement($fieldNamesBlankNodeId, 'rdf:type', 'rdf:Bag');
 
 		$i = 0;

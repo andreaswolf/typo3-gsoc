@@ -40,7 +40,9 @@ class Tx_RdfExport_Helper {
 		'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
 		'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
 		'owl' => 'http://www.w3.org/2002/07/owl#',
-		't3ds' => 'http://typo3.org/semantic/datastructure/',
+		't3o' => 'http://typo3.org/semantic#',
+		't3ds' => 'http://typo3.org/semantic/datastructures/',
+		't3dt' => 'http://typo3.org/semantic/datatypes/',
 		'xsd' => 'http://www.w3.org/2001/XMLSchema#'
 	);
 
@@ -68,7 +70,7 @@ class Tx_RdfExport_Helper {
 	}
 
 	public static function getRdfIdentifierForType(t3lib_DataStructure_Abstract $dataStructure, t3lib_DataStructure_Type $type) {
-		return self::$prefixes['t3ds'] . $dataStructure->getIdentifier() . '-' . $type->getIdentifier();
+		return self::$prefixes['t3dt'] . $dataStructure->getIdentifier() . '-' . $type->getIdentifier();
 	}
 
 	public static function getRdfIdentifierForField(t3lib_DataStructure_Element_Field $fieldObject) {

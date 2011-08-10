@@ -50,7 +50,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
 		$rdfIdentifier = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($dataStructure);
 
-		$this->assertEquals('http://typo3.org/semantic/datastructure/' . $dataStructureIdentifier, $rdfIdentifier);
+		$this->assertEquals($this->prefixes['t3ds'] . $dataStructureIdentifier, $rdfIdentifier);
 	}
 
 
@@ -75,7 +75,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
 		$rdfIdentifier = Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField);
 
-		$this->assertStringStartsWith('http://typo3.org/semantic/datastructure/', $rdfIdentifier);
+		$this->assertStringStartsWith($this->prefixes['t3ds'], $rdfIdentifier);
 	}
 
 	/**

@@ -126,15 +126,15 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$this->createFakeDataStructureObject($tca);
 
 		$expectedStatements = array(
-			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdf'] . 'property',
-			$this->prefixes['rdfs'] . 'subPropertyOf' => $this->prefixes['dcterms'] . 'created', // TODO replace dcterms with real namespace
+			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdf'] . 'Property',
+			$this->prefixes['owl'] . 'sameAs' => $this->prefixes['dcterms'] . 'created', // TODO replace dcterms with real namespace
 		);
 
 		$resultingStatements = $this->fixture->exportDataStructure($this->dataStructureFixture);
 
 		$fieldName = $this->dataStructureTcaFixture['ctrl']['crdate'];
 		$subject = array_shift(array_keys($resultingStatements));
-		$this->assertStringEndsWith($this->tableName . '.' . $fieldName, $subject);
+		$this->assertStringEndsWith($this->tableName . '#' . $fieldName, $subject);
 		$this->assertIsSupersetOf($expectedStatements, $resultingStatements[$subject]);
 	}
 
@@ -183,7 +183,7 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 
 		$expectedStatements = array(
 			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdfs'] . 'Class',
-			$this->prefixes['rdf'] . 'subclassOf' => $this->prefixes['t3ds'] . 'ContentType'
+			$this->prefixes['rdf'] . 'subclassOf' => $this->prefixes['t3o'] . 'ContentType'
 		);
 
 		$statements = $this->fixture->exportDataStructure($mockedDataStructure);
@@ -249,12 +249,12 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 
 		foreach ($statements as $subject => $subjectStatements) {
 			if (array_key_exists($this->canonicalize('rdf:subclassOf'), $subjectStatements)
-			  && $subjectStatements[$this->canonicalize('rdf:subclassOf')] == $this->canonicalize('t3ds:ContentType')) {
-				$fieldNodeId = $subjectStatements[$this->canonicalize('t3ds:fields')];
+			  && $subjectStatements[$this->canonicalize('rdf:subclassOf')] == $this->canonicalize('t3o:ContentType')) {
+				$fieldNodeId = $subjectStatements[$this->canonicalize('t3o:fields')];
 			}
 		}
 		if (!$fieldNodeId) {
-			$this->fail('Could not find t3ds:ContentType node in output');
+			$this->fail('Could not find t3o:ContentType node in output');
 		}
 
 		$this->assertEquals($this->prefixes['rdf'] . 'Bag', $statements[$fieldNodeId][$this->prefixes['rdf'] . 'type']);
