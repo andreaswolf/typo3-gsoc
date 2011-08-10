@@ -75,7 +75,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	}
 
 	/**
-	 * Checks for some properties that all column nodes should have, e.g. rdfs:domain and rdf:type
+	 * Checks for some properties that all column nodes should have, e.g. rdfs:domain, rdfs:subclassOf and rdf:type
 	 *
 	 * @param $statements
 	 * @return void
@@ -85,6 +85,8 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		$this->assertEquals($this->prefixes['t3ds'] . $this->dataStructureIdentifier, $statements[$this->prefixes['rdfs'] . 'domain']);
 		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'subclassOf', $statements);
 		$this->assertEquals($this->prefixes['rdf'] . 'Property', $statements[$this->prefixes['rdfs'] . 'subclassOf']);
+		$this->assertArrayHasKey($this->prefixes['rdf'] . 'type', $statements);
+		$this->assertEquals($this->prefixes['rdf'] . 'Class', $statements[$this->prefixes['rdf'] . 'type']);
 	}
 
 	public function primitiveTypesDataProvider() {
