@@ -257,9 +257,18 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 		list($subject, $statements) = $this->fixture->mapColumnDescriptionToRdfDataType($columnConfiguration, $columnIdentifier);
 
-		$subject = array_shift(array_keys($statements));
-
 		$this->assertEquals($columnIdentifier, $subject);
+	}
+
+	/**
+	 * @test
+	 */
+	public function columnNameIsExportedAsLabel() {
+		$columnConfiguration = $this->createMockedColumn(array('type' => 'input'));
+
+		list($subject, $statements) = $this->fixture->mapColumnDescriptionToRdfDataType($columnConfiguration, $columnIdentifier);
+
+		$this->assertEquals($this->columnName, $statements[$subject][$this->canonicalize('rdfs:label')]);
 	}
 }
 

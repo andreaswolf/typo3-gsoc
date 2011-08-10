@@ -86,6 +86,8 @@ class Tx_RdfExport_ColumnMapper {
 		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:domain')] = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure());
 		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:subclassOf')] = Tx_RdfExport_Helper::canonicalize('rdf:Property');
 		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdf:type')] = Tx_RdfExport_Helper::canonicalize('rdf:Class');
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:comment')] = 'Column ' . $column->getName();
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:label')] = $column->getName();
 
 			// rename the column node from the placeholder _ to the specified name
 		if ($columnNodeName == '') {
