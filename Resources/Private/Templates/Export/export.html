@@ -17,18 +17,9 @@
 	<div id="typo3-docbody">
 		<div id="typo3-inner-docbody">
 
-			<h1>Data structure export</h1>
+<h1>Export of data structure "{datastructure}"</h1>
 
-			<p><f:form action="export">
-			Export this data structure: <f:form.select name="datastructure" options="{datastructures}" /></p>
-
-			<p>Output format:<br />
-				<f:form.radio name="exportformat" value="html" checked="true" /> HTML<br />
-				<f:form.radio name="exportformat" value="turtle" /> Turtle<br />
-			</p>
-
-			<f:form.submit value="Export"/>
-			</f:form>
+<f:render partial="export-{format}" arguments="{statements:statements, turtle:turtle}"/>
 
 		</div>
 	</div>

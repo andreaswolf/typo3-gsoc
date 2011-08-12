@@ -61,19 +61,34 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 	 * @return void
 	 */
 	protected function initializeAction() {
-		// @todo Evaluate how the intval() call can be used with Extbase validators/filters
-		$this->pageId = intval(t3lib_div::_GP('id'));
-
 		//$this->pageRenderer->addInlineLanguageLabelFile('EXT:workspaces/Resources/Private/Language/locallang.xml');
+
+		$bootstrap = new \Erfurt\Core\Bootstrap('Production');
+		$bootstrap->run();
+	}
+
+	public function indexAction() {
+		$dataStructureList = array_keys($GLOBALS['TCA']);
+		sort($dataStructureList);
+		$dataStructureList = array_combine($dataStructureList, $dataStructureList);
+
+		$this->view->assign('datastructures', $dataStructureList);
 	}
 
 	/**
-	 * Simple action to list some stuff
+	 * Exports a data structure
 	 */
-	public function indexAction() {
+	public function exportAction() {
+		$dataStructureName = $this->request->getArgument('datastructure');
+		$this->view->assign('datastructure', $dataStructureName);
+
+		$format = $this->request->getArgument('exportformat');
+		$this->view->assign('format', $format);
+
 		/** @var $dsResolver t3lib_DataStructure_Resolver_Tca */
 		$dsResolver = t3lib_div::makeInstance('t3lib_DataStructure_Resolver_Tca');
-		$dataStructure = $dsResolver->resolveDataStructure('tt_content');
+			// TODO get data structure from parameter
+		$dataStructure = $dsResolver->resolveDataStructure($dataStructureName);
 
 		/** @var $exporter Tx_RdfExport_DataStructureExporter */
 		$exporter = t3lib_div::makeInstance('Tx_RdfExport_DataStructureExporter');
@@ -81,6 +96,50 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 
 		$statements = $exporter->exportDataStructure($dataStructure);
 
+		switch ($format) {
+			case 'html':
+				$this->exportHtml($statements);
+				break;
+			case 'turtle':
+				$this->exportTurtle($statements);
+				break;
+			default:
+				// TODO throw error
+		}
+	}
+
+	protected function exportTurtle(array $statements) {
+		/** @var $turtleSerializer Erfurt\Syntax\RdfSerializer\Adapter\Turtle */
+		$turtleSerializer = t3lib_div::makeInstance('Erfurt\Syntax\RdfSerializer\Adapter\Turtle');
+		foreach (Tx_RdfExport_Helper::getPrefixes() as $prefix => $ns) {
+			$turtleSerializer->handleNamespace($prefix, $ns);
+		}
+		$turtleSerializer->startRdf('');
+		foreach ($statements as $subject => $subjectStatements) {
+			foreach ($subjectStatements as $predicate => $object) {
+				if (substr($object, 0, 2) == '_:') {
+					$oType = 'bnode';
+				} elseif (Tx_RdfExport_Helper::isIri($object)) {
+					$oType = 'iri';
+				} else {
+					$oType = '';
+				}
+				if (Tx_RdfExport_Helper::isIri($subject)) {
+					$sType = 'iri';
+				} else {
+					$sType = '';
+				}
+
+					// TODO add $lang and $dType
+				$turtleSerializer->handleStatement($subject, $predicate, $object, $sType, $oType);
+			}
+		}
+		$turtle = $turtleSerializer->endRdf();
+
+		$this->view->assign('turtle', $turtle);
+	}
+
+	protected function exportHtml(array $statements) {
 		$this->view->assign('statements', $statements);
 	}
 

@@ -1,0 +1,8 @@
+<ul>
+<f:for each="{statements}" as="subjectStatements" key="subject">
+	<li><h2>{subject}</h2>
+	<ul style="list-style-type:circle;margin-left:2em;"><f:for each="{subjectStatements}" as="object" key="predicate">
+		<li>{predicate} {object}</li></f:for>
+	</ul></li>
+</f:for>
+</ul>

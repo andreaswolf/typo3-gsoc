@@ -11,11 +11,11 @@ if (TYPO3_MODE == 'BE' && !(TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_INSTALL)) {
 	Tx_Extbase_Utility_Extension::registerModule(
 		$_EXTKEY,
 		'tools',    // Make module a submodule of 'tools'
-		'rdfexport',    // Submodule key
+		'export',    // Submodule key
 		'', // Position
 		array(
 				// An array holding the controller-action-combinations that are accessible
-			'Export'        => 'index'
+			'Export'        => 'index,export'
 		),
 		array(
 			'access' => 'admin',

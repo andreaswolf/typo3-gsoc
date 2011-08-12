@@ -57,6 +57,10 @@ class Tx_RdfExport_Helper {
 		return $identifier;
 	}
 
+	public static function getPrefixes() {
+		return self::$prefixes;
+	}
+
 	public static function isDefinedPrefix($prefix) {
 		return array_key_exists($prefix, self::$prefixes);
 	}
@@ -78,10 +82,18 @@ class Tx_RdfExport_Helper {
 		$fieldIdentifier = $fieldObject->getName();
 
 		return self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier;
+		#return sprintf('urn:uuid:%s', sha1(self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier));
 	}
 
 	public static function generateBlankNodeId() {
 		return uniqid('_:bNode');
+	}
+
+	public static function isIri($iri) {
+		if (substr($iri, 0, 4) == 'urn:' || substr($iri, 0, 5) == 'http:' || substr($iri, 0, 6) == 'https:') {
+			return TRUE;
+		}
+		return FALSE;
 	}
 
 	/**
