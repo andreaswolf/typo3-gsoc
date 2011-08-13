@@ -82,11 +82,11 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	protected function verifyCommonColumnNodeProperties($statements) {
 		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'domain', $statements);
-		$this->assertEquals($this->prefixes['t3ds'] . $this->dataStructureIdentifier, $statements[$this->prefixes['rdfs'] . 'domain']);
+		$this->assertEquals($this->prefixes['t3ds'] . $this->dataStructureIdentifier, $statements[$this->prefixes['rdfs'] . 'domain'][0]['value']);
 		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'subclassOf', $statements);
-		$this->assertEquals($this->prefixes['rdf'] . 'Property', $statements[$this->prefixes['rdfs'] . 'subclassOf']);
+		$this->assertEquals($this->prefixes['rdf'] . 'Property', $statements[$this->prefixes['rdfs'] . 'subclassOf'][0]['value']);
 		$this->assertArrayHasKey($this->prefixes['rdf'] . 'type', $statements);
-		$this->assertEquals($this->prefixes['rdf'] . 'Class', $statements[$this->prefixes['rdf'] . 'type']);
+		$this->assertEquals($this->prefixes['rdf'] . 'Class', $statements[$this->prefixes['rdf'] . 'type'][0]['value']);
 	}
 
 	public function primitiveTypesDataProvider() {
@@ -158,7 +158,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
 
-		$this->assertEquals($expectedDataType, $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range']);
+		$this->assertEquals($expectedDataType, $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'][0]['value']);
 		$this->verifyCommonColumnNodeProperties($resultingStatements[$columnSubject]);
 	}
 
@@ -176,15 +176,15 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 		$this->assertArrayHasKey($this->prefixes['rdfs'] . 'range', $resultingStatements[$columnSubject]);
 			// check if the blank node containing the owl:unionOf statement exists
-		$rangeNodeId = $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'];
+		$rangeNodeId = $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'][0]['value'];
 		$this->assertArrayHasKey($rangeNodeId, $resultingStatements);
 			// check if the range node has the correct statement
 		$this->assertArrayHasKey($this->prefixes['owl'] . 'unionOf', $resultingStatements[$rangeNodeId]);
 			// there is a chained list of nodes behind the unionOf statement; see
 			// Tx_RdfExport_Helper::convertArrayToRdfNodes() for more info
-		$firstChainedNodeId = $resultingStatements[$rangeNodeId][$this->prefixes['owl'] . 'unionOf'];
+		$firstChainedNodeId = $resultingStatements[$rangeNodeId][$this->prefixes['owl'] . 'unionOf'][0]['value'];
 		$this->assertArrayHasKey($this->prefixes['rdf'] . 'first', $resultingStatements[$firstChainedNodeId]);
-		$this->assertEquals($this->prefixes['t3ds'] . 'tt_content', $resultingStatements[$firstChainedNodeId][$this->prefixes['rdf'] . 'first']);
+		$this->assertEquals($this->prefixes['t3ds'] . 'tt_content', $resultingStatements[$firstChainedNodeId][$this->prefixes['rdf'] . 'first'][0]['value']);
 
 		$this->verifyCommonColumnNodeProperties($resultingStatements[$columnSubject]);
 	}
@@ -202,11 +202,14 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 		list($columnSubject, $resultingStatements) = $this->fixture->mapColumnDescriptionToRdfDataType($column);
 
-		$rangeNodeId = $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'];
-		$firstTableNodeId = $resultingStatements[$rangeNodeId][$this->prefixes['owl'] . 'unionOf'];
-		$this->assertStringEndsWith($allowedTables[0], $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'first']);
-		$secondTableNodeId = $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'rest'];
-		$this->assertStringEndsWith($allowedTables[1], $resultingStatements[$secondTableNodeId][$this->prefixes['rdf'] . 'first']);
+		$rangeNodeId = $resultingStatements[$columnSubject][$this->prefixes['rdfs'] . 'range'][0]['value'];
+		$this->assertNotEmpty($rangeNodeId, 'Could not find a node name in rdfs:range');
+		$firstTableNodeId = $resultingStatements[$rangeNodeId][$this->prefixes['owl'] . 'unionOf'][0]['value'];
+		$this->assertNotEmpty($firstTableNodeId, 'Could not find a node name for the first table.');
+		$this->assertStringEndsWith($allowedTables[0], $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'first'][0]['value']);
+		$secondTableNodeId = $resultingStatements[$firstTableNodeId][$this->prefixes['rdf'] . 'rest'][0]['value'];
+		$this->assertNotEmpty($secondTableNodeId, 'Could not find a node name for the second table.');
+		$this->assertStringEndsWith($allowedTables[1], $resultingStatements[$secondTableNodeId][$this->prefixes['rdf'] . 'first'][0]['value']);
 
 		$this->verifyCommonColumnNodeProperties($resultingStatements[$columnSubject]);
 	}
@@ -268,7 +271,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 
 		list($subject, $statements) = $this->fixture->mapColumnDescriptionToRdfDataType($columnConfiguration, $columnIdentifier);
 
-		$this->assertEquals($this->columnName, $statements[$subject][$this->canonicalize('rdfs:label')]);
+		$this->assertEquals($this->columnName, $statements[$subject][$this->canonicalize('rdfs:label')][0]['value']);
 	}
 }
 

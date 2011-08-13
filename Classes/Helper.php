@@ -125,12 +125,12 @@ class Tx_RdfExport_Helper {
 			$nodeIdentifier = '_:' . uniqid();
 
 			$statement = array();
-			$statement[self::resolvePrefix('rdf') . 'first'] = $entry;
+			$statement[self::resolvePrefix('rdf') . 'first'] = array(array('value' => $entry));
 
 			if ($previousNode == '') {
-				$statement[self::resolvePrefix('rdf') . 'rest'] = self::resolvePrefix('rdf') . 'nil';
+				$statement[self::resolvePrefix('rdf') . 'rest'] = array(array('value' => self::resolvePrefix('rdf') . 'nil'));
 			} else {
-				$statement[self::resolvePrefix('rdf') . 'rest'] = $previousNode;
+				$statement[self::resolvePrefix('rdf') . 'rest'] = array(array('value' => $previousNode));
 			}
 
 			$previousNode = $nodeIdentifier;

@@ -175,17 +175,28 @@ class Tx_RdfExport_DataStructureExporter {
 
 		if ($dataStructureObject->hasControlValue('crdate')) {
 			$columnName = $dataStructureObject->getControlValue('crdate');
-			$columnObject =  $dataStructureObject->getFieldObject($columnName);
+			$columnObject = $dataStructureObject->getFieldObject($columnName);
 			$subject = Tx_RdfExport_Helper::getRdfIdentifierForField($columnObject);
 
 			$this->addMultipleStatements(array(
 				$subject => array(
-					'rdf:type' => 'rdf:Property',
-					'owl:sameAs' => 'dcterms:created',
+					'rdf:type' => array(array('value' => 'rdf:Property')),
+					'owl:sameAs' => array(array('value' => 'dcterms:created')),
 				)
 			));
 		}
-		//
+			// TODO check for labelAlt
+		if ($dataStructureObject->hasControlValue('label')) {
+			$columnName = $dataStructureObject->getControlValue('label');
+			$columnObject = $dataStructureObject->getFieldObject($columnName);
+			$subject = Tx_RdfExport_Helper::getRdfIdentifierForField($columnObject);
+
+			$this->addMultipleStatements(array(
+				$subject => array(
+					'owl:sameAs' => array(array('value' => 'dc:title'))
+				)
+			));
+		}
 	}
 
 	protected function mapTypeObjectToStatements(t3lib_DataStructure_Abstract $dataStructure, t3lib_DataStructure_Type $typeObject) {
@@ -209,16 +220,21 @@ class Tx_RdfExport_DataStructureExporter {
 	}
 
 	protected function addStatement($subject, $predicate, $object) {
+		if (!is_array($object)) {
+			$object = array('value' => $object);
+		}
 		$subject = Tx_RdfExport_Helper::canonicalize($subject);
 		$predicate = Tx_RdfExport_Helper::canonicalize($predicate);
-		$object = Tx_RdfExport_Helper::canonicalize($object);
-		$this->statements = t3lib_div::array_merge_recursive_overrule($this->statements, array($subject => array($predicate => $object)));
+		$object['value'] = Tx_RdfExport_Helper::canonicalize($object['value']);
+		$this->statements = t3lib_div::array_merge_recursive_overrule($this->statements, array($subject => array($predicate => array($object))));
 	}
 
 	protected function addMultipleStatements($statements) {
 		foreach ($statements as $subject => $subjectStatements) {
-			foreach ($subjectStatements as $predicate => $object) {
-				$this->addStatement($subject, $predicate, $object);
+			foreach ($subjectStatements as $predicate => $objects) {
+				foreach ($objects as $object) {
+					$this->addStatement($subject, $predicate, $object);
+				}
 			}
 		}
 	}

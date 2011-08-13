@@ -121,7 +121,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 		list(, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($input);
 
 		foreach ($statements as $statement) {
-			$this->assertContains($statement[$this->prefixes['rdf'] . 'first'], $input);
+			$this->assertContains($statement[$this->prefixes['rdf'] . 'first'][0]['value'], $input);
 		}
 	}
 
@@ -140,14 +140,14 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 			// reverse map from array value to bnode identifier (= subject of the statement)
 		$valueMap = array();
 		foreach ($statements as $subject => $statement) {
-			$value = $statement[$this->prefixes['rdf'] . 'first'];
+			$value = $statement[$this->prefixes['rdf'] . 'first'][0]['value'];
 			$valueMap[$value] = $subject;
 		}
 
 			// ignore the last element here, because it will be no reference to a node, but rdf:nil
 		for ($i = 0; $i < count($input) - 1; ++$i) {
 			$subject = $valueMap[$input[$i]];
-			$rdfLastObject = $statements[$subject][$this->prefixes['rdf'] . 'rest'];
+			$rdfLastObject = $statements[$subject][$this->prefixes['rdf'] . 'rest'][0]['value'];
 			$this->assertEquals($valueMap[$input[$i+1]], $rdfLastObject);
 		}
 	}
@@ -166,9 +166,9 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
 		$lastValue = array_pop($input);
 		foreach ($statements as $statement) {
-			$value = $statement[$this->prefixes['rdf'] . 'first'];
+			$value = $statement[$this->prefixes['rdf'] . 'first'][0]['value'];
 			if ($value == $lastValue) {
-				$this->assertEquals($this->prefixes['rdf'] . 'nil', $statement[$this->prefixes['rdf'] . 'rest']);
+				$this->assertEquals($this->prefixes['rdf'] . 'nil', $statement[$this->prefixes['rdf'] . 'rest'][0]['value']);
 			}
 		}
 	}
@@ -190,7 +190,7 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
 		$i = 0;
 		foreach ($statements as $statement) {
-			$value = $statement[$this->prefixes['rdf'] . 'first'];
+			$value = $statement[$this->prefixes['rdf'] . 'first'][0]['value'];
 			$this->assertEquals($input[$i], $value);
 			++$i;
 		}

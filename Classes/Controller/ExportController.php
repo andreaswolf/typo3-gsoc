@@ -116,22 +116,25 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 		}
 		$turtleSerializer->startRdf('');
 		foreach ($statements as $subject => $subjectStatements) {
-			foreach ($subjectStatements as $predicate => $object) {
-				if (substr($object, 0, 2) == '_:') {
-					$oType = 'bnode';
-				} elseif (Tx_RdfExport_Helper::isIri($object)) {
-					$oType = 'iri';
-				} else {
-					$oType = '';
-				}
-				if (Tx_RdfExport_Helper::isIri($subject)) {
-					$sType = 'iri';
-				} else {
-					$sType = '';
-				}
+			foreach ($subjectStatements as $predicate => $objects) {
+				foreach ($objects as $object) {
+					if (substr($object['value'], 0, 2) == '_:') {
+						$oType = 'bnode';
+							// TODO use Erfurt methods here -- all possible IRI prefixes are available there
+					} elseif (Tx_RdfExport_Helper::isIri($object['value'])) {
+						$oType = 'iri';
+					} else {
+						$oType = '';
+					}
+					if (Tx_RdfExport_Helper::isIri($subject)) {
+						$sType = 'iri';
+					} else {
+						$sType = '';
+					}
 
-					// TODO add $lang and $dType
-				$turtleSerializer->handleStatement($subject, $predicate, $object, $sType, $oType);
+						// TODO add $lang and $dType
+					$turtleSerializer->handleStatement($subject, $predicate, $object['value'], $sType, $oType);
+				}
 			}
 		}
 		$turtle = $turtleSerializer->endRdf();

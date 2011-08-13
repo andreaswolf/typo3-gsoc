@@ -35,6 +35,12 @@
  * @subpackage rdf_export
  */
 class Tx_RdfExport_ColumnMapper {
+
+	protected function createObject($value, $dataType = NULL, $language = NULL) {
+		return array(
+			'value' => $value
+		);
+	}
 	/**
 	 * Maps a column description (e.g. from TCA) to RDF statements
 	 *
@@ -83,11 +89,21 @@ class Tx_RdfExport_ColumnMapper {
 				throw new InvalidArgumentException('No mapping found for column type "' . $configuration['type'] . '".', 1310670994);
 		}
 
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:domain')] = Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure());
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:subclassOf')] = Tx_RdfExport_Helper::canonicalize('rdf:Property');
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdf:type')] = Tx_RdfExport_Helper::canonicalize('rdf:Class');
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:comment')] = 'Column ' . $column->getName();
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:label')] = $column->getName();
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:domain')] = array(
+			$this->createObject(Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure()))
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:subclassOf')] = array(
+			$this->createObject(Tx_RdfExport_Helper::canonicalize('rdf:Property'))
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdf:type')] = array(
+			$this->createObject(Tx_RdfExport_Helper::canonicalize('rdf:Class'))
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:comment')] = array(
+			$this->createObject('Column ' . $column->getName())
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:label')] = array(
+			$this->createObject($column->getName())
+		);
 
 			// rename the column node from the placeholder _ to the specified name
 		if ($columnNodeName == '') {
@@ -129,7 +145,7 @@ class Tx_RdfExport_ColumnMapper {
 			throw new InvalidArgumentException('No mapping found for input column.', 1310670995);
 		}
 
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:range')] = $type;
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:range')] = array($this->createObject($type));
 
 		return $statements;
 	}
@@ -143,7 +159,9 @@ class Tx_RdfExport_ColumnMapper {
 	protected function mapTextFieldToStatements($configuration) {
 		return array(
 			'_' => array(
-				Tx_RdfExport_Helper::canonicalize('rdfs:range') => Tx_RdfExport_Helper::canonicalize('xsd:string')
+				Tx_RdfExport_Helper::canonicalize('rdfs:range') => array(
+					$this->createObject(Tx_RdfExport_Helper::canonicalize('xsd:string'))
+				)
 			)
 		);
 	}
@@ -168,10 +186,10 @@ class Tx_RdfExport_ColumnMapper {
 
 		$rangeNodeIdentifier = '_:' . uniqid();
 		$statements[$rangeNodeIdentifier] = array(
-			Tx_RdfExport_Helper::canonicalize('owl:unionOf') => $firstRangeNodeIdentifier
+			Tx_RdfExport_Helper::canonicalize('owl:unionOf') => array($this->createObject($firstRangeNodeIdentifier))
 		);
 		$statements['_'] = array(
-			Tx_RdfExport_Helper::canonicalize('rdfs:range') => $rangeNodeIdentifier
+			Tx_RdfExport_Helper::canonicalize('rdfs:range') => array($this->createObject($rangeNodeIdentifier))
 		);
 
 		return $statements;

@@ -126,8 +126,8 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$this->createFakeDataStructureObject($tca);
 
 		$expectedStatements = array(
-			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdf'] . 'Property',
-			$this->prefixes['owl'] . 'sameAs' => $this->prefixes['dcterms'] . 'created', // TODO replace dcterms with real namespace
+			$this->prefixes['rdf'] . 'type' => array(array('value' => $this->prefixes['rdf'] . 'Property')),
+			$this->prefixes['owl'] . 'sameAs' => array(array('value' => $this->prefixes['dcterms'] . 'created')), // TODO replace dcterms with real namespace
 		);
 
 		$resultingStatements = $this->fixture->exportDataStructure($this->dataStructureFixture);
@@ -148,12 +148,12 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$subject1 = uniqid(); $subject2 = uniqid();
 		$expectedStatements = array(
 			$subject1 => array(
-				uniqid() => uniqid(),
-				uniqid() => uniqid()
+				uniqid() => array(array('value' => uniqid())),
+				uniqid() => array(array('value' => uniqid()))
 			),
 			$subject2 => array(
-				uniqid() => uniqid(),
-				uniqid() => uniqid()
+				uniqid() => array(array('value' => uniqid())),
+				uniqid() => array(array('value' => uniqid()))
 			)
 		);
 
@@ -182,8 +182,8 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 		$mockedDataStructure->expects($this->any())->method('getIdentifier')->will($this->returnValue($dataStructureIdentifier));
 
 		$expectedStatements = array(
-			$this->prefixes['rdf'] . 'type' => $this->prefixes['rdfs'] . 'Class',
-			$this->prefixes['rdf'] . 'subclassOf' => $this->prefixes['t3o'] . 'ContentType'
+			$this->prefixes['rdf'] . 'type' => array(array('value' => $this->prefixes['rdfs'] . 'Class')),
+			$this->prefixes['rdf'] . 'subclassOf' => array(array('value' => $this->prefixes['t3o'] . 'ContentType'))
 		);
 
 		$statements = $this->fixture->exportDataStructure($mockedDataStructure);
@@ -249,16 +249,16 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 
 		foreach ($statements as $subject => $subjectStatements) {
 			if (array_key_exists($this->canonicalize('rdf:subclassOf'), $subjectStatements)
-			  && $subjectStatements[$this->canonicalize('rdf:subclassOf')] == $this->canonicalize('t3o:ContentType')) {
-				$fieldNodeId = $subjectStatements[$this->canonicalize('t3o:fields')];
+			  && $subjectStatements[$this->canonicalize('rdf:subclassOf')][0]['value'] == $this->canonicalize('t3o:ContentType')) {
+				$fieldNodeId = $subjectStatements[$this->canonicalize('t3o:fields')][0]['value'];
 			}
 		}
 		if (!$fieldNodeId) {
 			$this->fail('Could not find t3o:ContentType node in output');
 		}
 
-		$this->assertEquals($this->prefixes['rdf'] . 'Bag', $statements[$fieldNodeId][$this->prefixes['rdf'] . 'type']);
-		$this->assertEquals(Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField1), $statements[$fieldNodeId][$this->prefixes['rdf'] . '_1']);
-		$this->assertEquals(Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField2), $statements[$fieldNodeId][$this->prefixes['rdf'] . '_2']);
+		$this->assertEquals($this->prefixes['rdf'] . 'Bag', $statements[$fieldNodeId][$this->prefixes['rdf'] . 'type'][0]['value']);
+		$this->assertEquals(Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField1), $statements[$fieldNodeId][$this->prefixes['rdf'] . '_1'][0]['value']);
+		$this->assertEquals(Tx_RdfExport_Helper::getRdfIdentifierForField($mockedField2), $statements[$fieldNodeId][$this->prefixes['rdf'] . '_2'][0]['value']);
 	}
 }
