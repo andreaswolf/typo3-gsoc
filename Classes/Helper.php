@@ -86,6 +86,11 @@ class Tx_RdfExport_Helper {
 		#return sprintf('urn:uuid:%s', sha1(self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier));
 	}
 
+	public static function getRdfIdentifierForRecord($table, $uid) {
+			// TODO use real base url of site here
+		return 'http://example.org/typo3/data/' . $table . '/' . intval($uid);
+	}
+
 	public static function generateBlankNodeId() {
 		return uniqid('_:bNode');
 	}

@@ -37,15 +37,154 @@
 class Tx_RdfExport_ColumnMapper {
 
 	protected function createObject($value, $dataType = NULL, $language = NULL) {
-		return array(
+		$object = array(
 			'value' => $value
 		);
+		if ($dataType !== NULL) {
+			$object['type'] = $dataType;
+		}
+
+		return $object;
 	}
+
+	/**
+	 * Creates a predicate => object array for a given field object
+	 *
+	 * @param t3lib_DataStructure_Element_Field $fieldObject
+	 * @param mixed $fieldValue
+	 * @return array
+	 */
+	public function mapFieldValueToStatement(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
+		$configuration = $fieldObject->getConfiguration();
+		$configuration = $configuration['config'];
+
+		switch ($configuration['type']) {
+			case 'group':
+				return $this->generateGroupFieldValueMapping($fieldObject, $fieldValue);
+
+				break;
+
+			default:
+				return $this->generateDefaultFieldValueMapping($fieldObject, $fieldValue);
+		}
+	}
+
+	protected function generateGroupFieldValueMapping(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
+		$configuration = $fieldObject->getConfiguration();
+		$configuration = $configuration['config'];
+
+		switch ($configuration['internal_type']) {
+			case 'db':
+				if (isset($configuration['MM'])) {
+					// TODO resolve MM table
+				} else {
+					$allowed = $configuration['allowed'];
+					$onlySingleTableAllowed = (strpos($allowed, ',') === FALSE && $allowed !== '*');
+
+						// copied from t3lib_TCEforms::getSingleField_typeGroup()
+					$temp_itemArray = t3lib_div::trimExplode(',', $fieldValue, TRUE);
+					foreach ($temp_itemArray as $dbRead) {
+						$recordParts = explode('|', $dbRead);
+						list($this_table, $this_uid) = t3lib_BEfunc::splitTable_Uid($recordParts[0]);
+							// For the case that no table was found and only a single table is defined to be allowed, use that one:
+						if (!$this_table && $onlySingleTableAllowed) {
+							$this_table = $allowed;
+						}
+						$itemArray[] = array('table' => $this_table, 'id' => $this_uid);
+					}
+				}
+
+				$blankNodeIdentifier = Tx_RdfExport_Helper::generateBlankNodeId();
+				$statements[$blankNodeIdentifier] = array(Tx_RdfExport_Helper::canonicalize('rdf:type') => $this->createObject('rdf:Seq'));
+				$i = 0;
+				foreach ($itemArray as $record) {
+					++$i;
+					$statements[$blankNodeIdentifier][Tx_RdfExport_Helper::canonicalize("rdf:_$i")] =
+						array($this->createObject(Tx_RdfExport_Helper::getRdfIdentifierForRecord($record['table'], $record['id'])));
+				}
+
+				$object = array(Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject) => array($this->createObject($blankNodeIdentifier)));
+
+				break;
+			default:
+				throw new RuntimeException('Not implemented.', 1313415423);
+				// TODO implement other types
+		}
+
+		return array($object, $statements);
+	}
+
+	/**
+	 * Generates a mapping for a
+	 *
+	 * @throws InvalidArgumentException
+	 * @param t3lib_DataStructure_Element_Field $fieldObject
+	 * @param $fieldValue
+	 * @return array
+	 */
+	protected function generateDefaultFieldValueMapping(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
+		$configuration = $fieldObject->getConfiguration();
+		$configuration = $configuration['config'];
+
+		$statements = $this->generateTypeDependentStatements($configuration);
+
+		if (!$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:range')][0]['value']) {
+			throw new InvalidArgumentException('No usable rdfs:range statement found');
+		}
+
+		$dataType = $statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:range')][0]['value'];
+		switch ($dataType) {
+			case Tx_RdfExport_Helper::canonicalize('xsd:integer'):
+				$fieldValue = intval($fieldValue);
+
+				break;
+
+				// date/time according to ISO 8601
+			case Tx_RdfExport_Helper::canonicalize('xsd:dateTime'):
+					// TODO use offset here instead
+				$fieldValue = $fieldValue - self::getLocalTimezoneOffsetToUTC();
+				$fieldValue = strftime('%Y-%m-%dT%H:%M:%SZ', $fieldValue);
+
+				break;
+
+			case Tx_RdfExport_Helper::canonicalize('xsd:date'):
+					// TODO use offset here instead
+				$fieldValue = $fieldValue - self::getLocalTimezoneOffsetToUTC();
+				$fieldValue = strftime('%Y-%m-%d', $fieldValue);
+
+				break;
+
+			case Tx_RdfExport_Helper::canonicalize('xsd:time'):
+					// TODO use offset here instead
+				$fieldValue = $fieldValue - self::getLocalTimezoneOffsetToUTC();
+				$fieldValue = strftime('%H:%M:%SZ', $fieldValue);
+
+				break;
+		}
+
+		$object = array(Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject) => array($this->createObject($fieldValue, $dataType)));
+
+		return array($object, $additionalStatements);
+	}
+
+	protected static function getLocalTimezoneOffsetToUTC() {
+		static $offset = NULL;
+
+		if ($offset === NULL) {
+			$timezone = new DateTimeZone(date_default_timezone_get());
+			$offset = $timezone->getOffset(new DateTime('now', new DateTimeZone('UTC')));
+		}
+		return $offset;
+	}
+
 	/**
 	 * Maps a column description (e.g. from TCA) to RDF statements
 	 *
-	 * @param array $columnDescription
-	 * @return
+	 * @param t3lib_DataStructure_Element_Field $column
+	 * @param string $columnNodeName
+	 * @return array
+	 *
+	 * TODO rename to ...ToStatements
 	 */
 	public function mapColumnDescriptionToRdfDataType(t3lib_DataStructure_Element_Field $column, $columnNodeName = '') {
 		/**
@@ -54,13 +193,48 @@ class Tx_RdfExport_ColumnMapper {
 		 *
 		 * tbd:
 		 *  - define sensible types for each column type defined in TCA (also respect e.g. eval for input)
-		 *  - find out if any kind of automagic conversion might make sense here
 		 */
 		$configuration = $column->getConfiguration();
 		$configuration = $configuration['config'];
 
-		$statements = array();
-		switch($configuration['type']) {
+		$statements = $this->generateTypeDependentStatements($configuration);
+
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:domain')] = array(
+			$this->createObject(Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure()))
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:subclassOf')] = array(
+			$this->createObject(Tx_RdfExport_Helper::canonicalize('rdf:Property'))
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdf:type')] = array(
+			$this->createObject(Tx_RdfExport_Helper::canonicalize('rdf:Class'))
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:comment')] = array(
+			$this->createObject('Column ' . $column->getName())
+		);
+		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:label')] = array(
+			$this->createObject($column->getName())
+		);
+
+			// rename the column node from the placeholder _ to the specified name
+		if ($columnNodeName == '') {
+			$columnNodeName = '_:' . uniqid();
+		}
+		$statements[$columnNodeName] = $statements['_'];
+		unset($statements['_']);
+
+		return array($columnNodeName, $statements);
+	}
+
+	/**
+	 * Generates all statements that depend on the type of column, e.g. input, text or group. First and foremost,
+	 * this is the rdfs:range statement that denotes the datatype used in the column
+	 *
+	 * @throws InvalidArgumentException
+	 * @param $configuration
+	 * @return array
+	 */
+	protected function generateTypeDependentStatements($configuration) {
+		switch ($configuration['type']) {
 			case 'input':
 				$statements = $this->mapInputFieldToStatements($configuration);
 
@@ -88,31 +262,7 @@ class Tx_RdfExport_ColumnMapper {
 			default:
 				throw new InvalidArgumentException('No mapping found for column type "' . $configuration['type'] . '".', 1310670994);
 		}
-
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:domain')] = array(
-			$this->createObject(Tx_RdfExport_Helper::getRdfIdentifierForDataStructure($column->getDataStructure()))
-		);
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:subclassOf')] = array(
-			$this->createObject(Tx_RdfExport_Helper::canonicalize('rdf:Property'))
-		);
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdf:type')] = array(
-			$this->createObject(Tx_RdfExport_Helper::canonicalize('rdf:Class'))
-		);
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:comment')] = array(
-			$this->createObject('Column ' . $column->getName())
-		);
-		$statements['_'][Tx_RdfExport_Helper::canonicalize('rdfs:label')] = array(
-			$this->createObject($column->getName())
-		);
-
-			// rename the column node from the placeholder _ to the specified name
-		if ($columnNodeName == '') {
-			$columnNodeName = '_:' . uniqid();
-		}
-		$statements[$columnNodeName] = $statements['_'];
-		unset($statements['_']);
-
-		return array($columnNodeName, $statements);
+		return $statements;
 	}
 
 	/**
@@ -173,8 +323,6 @@ class Tx_RdfExport_ColumnMapper {
 	 * @return array Some statements describing the column (predicate as key, object as value)
 	 */
 	protected function mapDatabaseRelationFieldToStatements($configuration) {
-		$statements = array();
-
 		$tables = t3lib_div::trimExplode(',', $configuration['allowed']);
 
 		$tableIdentifiers = array();
@@ -184,7 +332,7 @@ class Tx_RdfExport_ColumnMapper {
 
 		list($firstRangeNodeIdentifier, $statements) = Tx_RdfExport_Helper::convertArrayToRdfNodes($tableIdentifiers);
 
-		$rangeNodeIdentifier = '_:' . uniqid();
+		$rangeNodeIdentifier = Tx_RdfExport_Helper::generateBlankNodeId();
 		$statements[$rangeNodeIdentifier] = array(
 			Tx_RdfExport_Helper::canonicalize('owl:unionOf') => array($this->createObject($firstRangeNodeIdentifier))
 		);

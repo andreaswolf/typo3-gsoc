@@ -94,6 +94,19 @@ class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 	/**
 	 * @test
 	 */
+	public function getRdfIdentifierForRecordReturnsCorrectIdentifier() {
+		$recordTable = uniqid();
+		$recordUid = rand(1, 10000);
+
+		$rdfIdentifier = Tx_RdfExport_Helper::getRdfIdentifierForRecord($recordTable, $recordUid);
+
+			// TODO include URL of website into test
+		$this->assertStringEndsWith($recordTable . '/' . $recordUid, $rdfIdentifier);
+	}
+
+	/**
+	 * @test
+	 */
 	public function convertArrayToRdfNodesGeneratesBlankNodeForEachEntry() {
 		$input = array(
 			uniqid(),
