@@ -290,10 +290,12 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	public function fieldValueMappingUsesCorrectPredicate() {
 		$column = $this->createMockedColumn(array('type' => 'input'));
+		$recordNodeIdentifier = uniqid();
 
-		list($statement) = $this->fixture->mapFieldValueToStatement($column, $fieldValue);
+		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
+		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
 
-		$this->assertArrayHasKey(Tx_RdfExport_Helper::getRdfIdentifierForField($column), $statement);
+		$this->assertArrayHasKey(Tx_RdfExport_Helper::getRdfIdentifierForField($column), $statements[$recordNodeIdentifier]);
 	}
 
 	/**
@@ -301,16 +303,17 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	public function integerValuesAreCorrectlyMapped() {
 		$column = $this->createMockedColumn(array('type' => 'input', 'eval' => 'int'));
+		$recordNodeIdentifier = uniqid();
 
 		$fieldValue = rand(1, 100);
 
-		list($statement) = $this->fixture->mapFieldValueToStatement($column, $fieldValue);
+		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
 
 		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
-		$this->assertArrayHasKey($predicate, $statement);
+		$this->assertArrayHasKey($predicate, $statements[$recordNodeIdentifier]);
 
-		$this->assertEquals($this->canonicalize('xsd:integer'), $statement[$predicate][0]['type']);
-		$this->assertEquals($fieldValue, $statement[$predicate][0]['value']);
+		$this->assertEquals($this->canonicalize('xsd:integer'), $statements[$recordNodeIdentifier][$predicate][0]['type']);
+		$this->assertEquals($fieldValue, $statements[$recordNodeIdentifier][$predicate][0]['value']);
 	}
 
 	/**
@@ -318,18 +321,19 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	public function datetimeValuesAreCorrectlyMapped() {
 		$column = $this->createMockedColumn(array('type' => 'input', 'eval' => 'datetime'));
+		$recordNodeIdentifier = uniqid();
 
 			// TODO add timezone support
 		$fieldValue = 1313337742;
 		$formattedFieldValue = '2011-08-14T16:02:22Z';
 
-		list($statement) = $this->fixture->mapFieldValueToStatement($column, $fieldValue);
+		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
 
 		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
-		$this->assertArrayHasKey($predicate, $statement);
+		$this->assertArrayHasKey($predicate, $statements[$recordNodeIdentifier]);
 
-		$this->assertEquals($this->canonicalize('xsd:dateTime'), $statement[$predicate][0]['type']);
-		$this->assertEquals($formattedFieldValue, $statement[$predicate][0]['value']);
+		$this->assertEquals($this->canonicalize('xsd:dateTime'), $statements[$recordNodeIdentifier][$predicate][0]['type']);
+		$this->assertEquals($formattedFieldValue, $statements[$recordNodeIdentifier][$predicate][0]['value']);
 	}
 
 	/**
@@ -337,17 +341,18 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	public function dateValuesAreCorrectlyMapped() {
 		$column = $this->createMockedColumn(array('type' => 'input', 'eval' => 'date'));
+		$recordNodeIdentifier = uniqid();
 
-		$fieldValue = 1313337742;
+		$fieldValue = mktime(0, 0, 0, 8, 14, 2011);
 		$formattedFieldValue = '2011-08-14';
 
-		list($statement) = $this->fixture->mapFieldValueToStatement($column, $fieldValue);
+		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
 
 		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
-		$this->assertArrayHasKey($predicate, $statement);
+		$this->assertArrayHasKey($predicate, $statements[$recordNodeIdentifier]);
 
-		$this->assertEquals($this->canonicalize('xsd:date'), $statement[$predicate][0]['type']);
-		$this->assertEquals($formattedFieldValue, $statement[$predicate][0]['value']);
+		$this->assertEquals($this->canonicalize('xsd:date'), $statements[$recordNodeIdentifier][$predicate][0]['type']);
+		$this->assertEquals($formattedFieldValue, $statements[$recordNodeIdentifier][$predicate][0]['value']);
 	}
 
 	/**
@@ -355,18 +360,19 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	public function timeValuesAreCorrectlyMapped() {
 		$column = $this->createMockedColumn(array('type' => 'input', 'eval' => 'timesec'));
+		$recordNodeIdentifier = uniqid();
 
 			// TODO add timezone support
 		$fieldValue = 1313337742;
 		$formattedFieldValue = '16:02:22Z';
 
-		list($statement) = $this->fixture->mapFieldValueToStatement($column, $fieldValue);
+		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
 
 		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
-		$this->assertArrayHasKey($predicate, $statement);
+		$this->assertArrayHasKey($predicate, $statements[$recordNodeIdentifier]);
 
-		$this->assertEquals($this->canonicalize('xsd:time'), $statement[$predicate][0]['type']);
-		$this->assertEquals($formattedFieldValue, $statement[$predicate][0]['value']);
+		$this->assertEquals($this->canonicalize('xsd:time'), $statements[$recordNodeIdentifier][$predicate][0]['type']);
+		$this->assertEquals($formattedFieldValue, $statements[$recordNodeIdentifier][$predicate][0]['value']);
 	}
 
 	public function relationsWithCsv_dataProvider() {
@@ -406,21 +412,22 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 	 */
 	public function relationsWithCsvAreCorrectlyMapped($table, $fieldValue, $expectedRelationUrls) {
 		$column = $this->createMockedColumn(array('type' => 'group', 'internal_type' => 'db', 'allowed' => $table));
+		$recordNodeIdentifier = uniqid();
 
-		list($statement, $additionalStatements) = $this->fixture->mapFieldValueToStatement($column, $fieldValue);
+		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
 
 		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
 		$this->assertArrayHasKey($predicate, $statement);
 
-		$blankNodeId = $statement[$predicate][0]['value'];
+		$blankNodeId = $statements[$recordNodeIdentifier][$predicate][0]['value'];
 		if (!$blankNodeId) { $this->fail('Could not get id of blank node.'); }
-		$this->assertArrayHasKey($blankNodeId, $additionalStatements);
+		$this->assertArrayHasKey($blankNodeId, $statements);
 
 		$counter = 0;
 		foreach ($expectedRelationUrls as $expectedUrl) {
 			++$counter;
 			$this->assertStringEndsWith($expectedUrl,
-			  $additionalStatements[$blankNodeId][$this->canonicalize('rdf:_' . $counter)][0]['value']);
+			  $statements[$blankNodeId][$this->canonicalize('rdf:_' . $counter)][0]['value']);
 		}
 	}
 }

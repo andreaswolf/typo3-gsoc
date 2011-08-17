@@ -54,19 +54,21 @@ class Tx_RdfExport_ColumnMapper {
 	 * @param mixed $fieldValue
 	 * @return array
 	 */
-	public function mapFieldValueToStatement(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
+	public function mapFieldValueToStatement(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue, $recordNodeIdentifier = '') {
 		$configuration = $fieldObject->getConfiguration();
 		$configuration = $configuration['config'];
 
 		switch ($configuration['type']) {
 			case 'group':
-				return $this->generateGroupFieldValueMapping($fieldObject, $fieldValue);
+				list($object, $additionalStatements) = $this->generateGroupFieldValueMapping($fieldObject, $fieldValue);
 
 				break;
 
 			default:
-				return $this->generateDefaultFieldValueMapping($fieldObject, $fieldValue);
+				list($object, $additionalStatements) = $this->generateDefaultFieldValueMapping($fieldObject, $fieldValue);
 		}
+
+		return t3lib_div::array_merge_recursive_overrule(array($recordNodeIdentifier => $object), (array)$additionalStatements);
 	}
 
 	protected function generateGroupFieldValueMapping(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
@@ -141,23 +143,20 @@ class Tx_RdfExport_ColumnMapper {
 
 				// date/time according to ISO 8601
 			case Tx_RdfExport_Helper::canonicalize('xsd:dateTime'):
-					// TODO use offset here instead
-				$fieldValue = $fieldValue - self::getLocalTimezoneOffsetToUTC();
-				$fieldValue = strftime('%Y-%m-%dT%H:%M:%SZ', $fieldValue);
+				$fieldValue = gmstrftime('%Y-%m-%dT%H:%M:%SZ', $fieldValue);
 
 				break;
 
 			case Tx_RdfExport_Helper::canonicalize('xsd:date'):
-					// TODO use offset here instead
-				$fieldValue = $fieldValue - self::getLocalTimezoneOffsetToUTC();
-				$fieldValue = strftime('%Y-%m-%d', $fieldValue);
+					// correct the field value by half a day; otherwise we get in trouble as TYPO3 saves the value
+					// as midnight in the local time zone (which will be converted a time on to the day before when
+					// transforming to GMT - at least for all time zones right of GMT, e.g. CE[S]T)
+				$fieldValue = gmstrftime('%Y-%m-%d', $fieldValue + 43200);
 
 				break;
 
 			case Tx_RdfExport_Helper::canonicalize('xsd:time'):
-					// TODO use offset here instead
-				$fieldValue = $fieldValue - self::getLocalTimezoneOffsetToUTC();
-				$fieldValue = strftime('%H:%M:%SZ', $fieldValue);
+				$fieldValue = gmstrftime('%H:%M:%SZ', $fieldValue);
 
 				break;
 		}
@@ -165,16 +164,6 @@ class Tx_RdfExport_ColumnMapper {
 		$object = array(Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject) => array($this->createObject($fieldValue, $dataType)));
 
 		return array($object, $additionalStatements);
-	}
-
-	protected static function getLocalTimezoneOffsetToUTC() {
-		static $offset = NULL;
-
-		if ($offset === NULL) {
-			$timezone = new DateTimeZone(date_default_timezone_get());
-			$offset = $timezone->getOffset(new DateTime('now', new DateTimeZone('UTC')));
-		}
-		return $offset;
 	}
 
 	/**
