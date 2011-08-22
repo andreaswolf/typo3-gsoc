@@ -149,8 +149,12 @@ class Tx_RdfExport_Helper {
 	 * @return string
 	 */
 	public static function getRdfIdentifierForRecord($table, $uid) {
-			// TODO use real base url of site here
-		return 'http://example.org/typo3/data/' . $table . '/' . intval($uid);
+		static $baseUri;
+
+		if (!$baseUri) {
+			$baseUri = rtrim(self::getExtensionConfigurationValue('dataNodeBaseUri'), '/') . '/';
+		}
+		return $baseUri . $table . '/' . intval($uid);
 	}
 
 	/**
@@ -218,5 +222,22 @@ class Tx_RdfExport_Helper {
 		}
 
 		return array($previousNode, array_reverse($statements));
+	}
+
+	/**
+	 * Returns a value from the extension configuration set via the extension manager.
+	 *
+	 * @static
+	 * @param string $key The key to return
+	 * @return mixed
+	 */
+	public static function getExtensionConfigurationValue($key) {
+		static $extConf;
+
+		if (!$extConf) {
+			$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['rdf_export']);
+		}
+
+		return $extConf[$key];
 	}
 }
