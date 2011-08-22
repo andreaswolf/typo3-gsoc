@@ -32,9 +32,12 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage rdf_export
+ * @subpackage Tx_RdfExport
  */
 class Tx_RdfExport_Helper {
+	/**
+	 * @var string[]
+	 */
 	protected static $prefixes = array(
 		'dc' => 'http://purl.org/dc/elements/1.1/',
 		'dcterms' => 'http://purl.org/dc/terms/',
@@ -47,6 +50,15 @@ class Tx_RdfExport_Helper {
 		'xsd' => 'http://www.w3.org/2001/XMLSchema#'
 	);
 
+	/**
+	 * Replaces a namespace prefix in an identifier with the full namespace
+	 *
+	 * @static
+	 * @param $identifier
+	 * @return string
+	 *
+	 * @see getPrefixes()
+	 */
 	public static function canonicalize($identifier) {
 		if (strpos($identifier, ':') > 0 && $identifier{0} !== '_') {
 			$prefix = substr($identifier, 0, strpos($identifier, ':'));
@@ -58,26 +70,68 @@ class Tx_RdfExport_Helper {
 		return $identifier;
 	}
 
+	/**
+	 * Returns a list of all prefixes defined in the RDF Export extension
+	 *
+	 * @static
+	 * @return array
+	 */
 	public static function getPrefixes() {
 		return self::$prefixes;
 	}
 
+	/**
+	 * Returns TRUE if a namespace with the given prefix is registered.
+	 *
+	 * @static
+	 * @param $prefix
+	 * @return bool
+	 */
 	public static function isDefinedPrefix($prefix) {
 		return array_key_exists($prefix, self::$prefixes);
 	}
 
+	/**
+	 * Returns the namespace for a given prefix.
+	 *
+	 * @static
+	 * @param $prefix
+	 * @return string
+	 */
 	public static function resolvePrefix($prefix) {
 		return self::$prefixes[$prefix];
 	}
 
+	/**
+	 * Returns a complete identifier for a data structure, for usage as an RDF subject or object.
+	 *
+	 * @static
+	 * @param t3lib_DataStructure_Abstract $dataStructure
+	 * @return string
+	 */
 	public static function getRdfIdentifierForDataStructure(t3lib_DataStructure_Abstract $dataStructure) {
 		return self::$prefixes['t3ds'] . $dataStructure->getIdentifier();
 	}
 
+	/**
+	 * Returns a complete identifier for a content type, for usage as an RDF subject or object
+	 *
+	 * @static
+	 * @param t3lib_DataStructure_Abstract $dataStructure
+	 * @param t3lib_DataStructure_Type $type
+	 * @return string
+	 */
 	public static function getRdfIdentifierForType(t3lib_DataStructure_Abstract $dataStructure, t3lib_DataStructure_Type $type) {
 		return self::$prefixes['t3dt'] . $dataStructure->getIdentifier() . '-' . $type->getIdentifier();
 	}
 
+	/**
+	 * Returns a complete identifier for a field, for usage as an RDF subject or object
+	 *
+	 * @static
+	 * @param t3lib_DataStructure_Element_Field $fieldObject
+	 * @return string
+	 */
 	public static function getRdfIdentifierForField(t3lib_DataStructure_Element_Field $fieldObject) {
 		$dataStructure = $fieldObject->getDataStructure();
 		$fieldIdentifier = $fieldObject->getName();
@@ -86,15 +140,36 @@ class Tx_RdfExport_Helper {
 		#return sprintf('urn:uuid:%s', sha1(self::getRdfIdentifierForDataStructure($dataStructure) . '#' . $fieldIdentifier));
 	}
 
+	/**
+	 * Returns a complete identifier for a record, for usage as an RDF subject or object
+	 *
+	 * @static
+	 * @param $table
+	 * @param $uid
+	 * @return string
+	 */
 	public static function getRdfIdentifierForRecord($table, $uid) {
 			// TODO use real base url of site here
 		return 'http://example.org/typo3/data/' . $table . '/' . intval($uid);
 	}
 
+	/**
+	 * Generates an identifier for a blank node, with prefix _:bNode
+	 *
+	 * @static
+	 * @return string
+	 */
 	public static function generateBlankNodeId() {
 		return uniqid('_:bNode');
 	}
 
+	/**
+	 * Returns TRUE if a given string is an IRI (an internationalized version of a URI)
+	 *
+	 * @static
+	 * @param $iri
+	 * @return bool
+	 */
 	public static function isIri($iri) {
 		if (substr($iri, 0, 4) == 'urn:' || substr($iri, 0, 5) == 'http:' || substr($iri, 0, 6) == 'https:') {
 			return TRUE;

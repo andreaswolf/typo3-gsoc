@@ -32,7 +32,7 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage 
+ * @subpackage Tx_RdfExport
  */
 class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 

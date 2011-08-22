@@ -32,10 +32,20 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage rdf_export
+ * @subpackage Tx_RdfExport
  */
 class Tx_RdfExport_ColumnMapper {
 
+	/**
+	 * Creates an array representing an object in an RDF triple. The array is ready to be used with the Erfurt library.
+	 *
+	 * @param $value
+	 * @param string $dataType
+	 * @param string $language
+	 * @return array
+	 *
+	 * TODO implement language handling
+	 */
 	protected function createObject($value, $dataType = NULL, $language = NULL) {
 		$object = array(
 			'value' => $value
@@ -65,12 +75,23 @@ class Tx_RdfExport_ColumnMapper {
 				break;
 
 			default:
-				list($object, $additionalStatements) = $this->generateDefaultFieldValueMapping($fieldObject, $fieldValue);
+				list($object, $additionalStatements) = $this->generateSimpleFieldValueMapping($fieldObject, $fieldValue);
 		}
 
 		return t3lib_div::array_merge_recursive_overrule(array($recordNodeIdentifier => $object), (array)$additionalStatements);
 	}
 
+	/**
+	 * Maps a value of a field of type "group".
+	 *
+	 * TODO implement MM handling
+	 * TODO implement internal types other than "db" (file, folder, file_reference)
+	 *
+	 * @throws RuntimeException
+	 * @param t3lib_DataStructure_Element_Field $fieldObject
+	 * @param $fieldValue
+	 * @return array
+	 */
 	protected function generateGroupFieldValueMapping(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
 		$configuration = $fieldObject->getConfiguration();
 		$configuration = $configuration['config'];
@@ -117,14 +138,14 @@ class Tx_RdfExport_ColumnMapper {
 	}
 
 	/**
-	 * Generates a mapping for a
+	 * Generates a mapping for a "simple" value type, e.g. an integer, a date or a string
 	 *
 	 * @throws InvalidArgumentException
-	 * @param t3lib_DataStructure_Element_Field $fieldObject
-	 * @param $fieldValue
+	 * @param t3lib_DataStructure_Element_Field $fieldObject The values field object
+	 * @param mixed $fieldValue
 	 * @return array
 	 */
-	protected function generateDefaultFieldValueMapping(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
+	protected function generateSimpleFieldValueMapping(t3lib_DataStructure_Element_Field $fieldObject, $fieldValue) {
 		$configuration = $fieldObject->getConfiguration();
 		$configuration = $configuration['config'];
 
@@ -176,13 +197,6 @@ class Tx_RdfExport_ColumnMapper {
 	 * TODO rename to ...ToStatements
 	 */
 	public function mapColumnDescriptionToRdfDataType(t3lib_DataStructure_Element_Field $column, $columnNodeName = '') {
-		/**
-		 * - examine column configuration
-		 * - choose a type that fits
-		 *
-		 * tbd:
-		 *  - define sensible types for each column type defined in TCA (also respect e.g. eval for input)
-		 */
 		$configuration = $column->getConfiguration();
 		$configuration = $configuration['config'];
 
@@ -248,6 +262,7 @@ class Tx_RdfExport_ColumnMapper {
 
 				break;
 
+				// TODO implement the missing types here
 			default:
 				throw new InvalidArgumentException('No mapping found for column type "' . $configuration['type'] . '".', 1310670994);
 		}

@@ -34,7 +34,7 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage rdf_export
+ * @subpackage Tx_RdfExport
  */
 class Tx_RdfExport_DataStructureExporter {
 
@@ -125,9 +125,9 @@ class Tx_RdfExport_DataStructureExporter {
 	}
 
 	/**
-	 * Exports a table definiton (from the TYPO3 Table Configuration Array) as RDF-Schema
+	 * Exports a table definition (from the TYPO3 Table Configuration Array) as RDF-Schema
 	 *
-	 * @param  $table
+	 * @param t3lib_DataStructure_Abstract $dataStructureObject The data structure to export
 	 * @return array The statements that represent the data structure
 	 */
 	public function exportDataStructure(t3lib_DataStructure_Abstract $dataStructureObject) {

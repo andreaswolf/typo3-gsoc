@@ -28,11 +28,11 @@
 
 
 /**
- * 
+ * Controller for the RDF export backend module.
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage 
+ * @subpackage Tx_RdfExport
  */
 class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller_ActionController {
 	/**

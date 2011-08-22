@@ -26,11 +26,11 @@
  ***************************************************************/
 
 /**
- * Base test case for the RDF export
+ * Base test case for the RDF export extension
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage
+ * @subpackage Tx_RdfExport
  */
 abstract class Tx_RdfExport_TestCase extends Tx_Phpunit_TestCase {
 	protected $prefixes = array(

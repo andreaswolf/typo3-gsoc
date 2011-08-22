@@ -31,7 +31,7 @@
  *
  * @author Andreas Wolf <andreas.wolf@ikt-werk.de>
  * @package TYPO3
- * @subpackage rdf_export
+ * @subpackage Tx_RdfExport
  */
 class Tx_RdfExport_HelperTest extends Tx_RdfExport_TestCase {
 
