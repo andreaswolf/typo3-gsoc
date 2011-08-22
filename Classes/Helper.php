@@ -57,7 +57,7 @@ class Tx_RdfExport_Helper {
 	 * @param $identifier
 	 * @return string
 	 *
-	 * @see getPrefixes()
+	 * @see getNamespaces()
 	 */
 	public static function canonicalize($identifier) {
 		if (strpos($identifier, ':') > 0 && $identifier{0} !== '_') {
@@ -76,7 +76,7 @@ class Tx_RdfExport_Helper {
 	 * @static
 	 * @return array
 	 */
-	public static function getPrefixes() {
+	public static function getNamespaces() {
 		return self::$prefixes;
 	}
 

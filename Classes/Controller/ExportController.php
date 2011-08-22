@@ -150,7 +150,7 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 	protected function exportTurtle(array $statements) {
 		/** @var $turtleSerializer Erfurt\Syntax\RdfSerializer\Adapter\Turtle */
 		$turtleSerializer = t3lib_div::makeInstance('Erfurt\Syntax\RdfSerializer\Adapter\Turtle');
-		foreach (Tx_RdfExport_Helper::getPrefixes() as $prefix => $ns) {
+		foreach (Tx_RdfExport_Helper::getNamespaces() as $prefix => $ns) {
 			$turtleSerializer->handleNamespace($prefix, $ns);
 		}
 		$turtleSerializer->startRdf('');
