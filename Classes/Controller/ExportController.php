@@ -194,19 +194,24 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 	 * @return void
 	 */
 	public function processRequest(Tx_Extbase_MVC_RequestInterface $request, Tx_Extbase_MVC_ResponseInterface $response) {
-		$this->template = t3lib_div::makeInstance('template');
-		$this->pageRenderer = $this->template->getPageRenderer();
-
-		$GLOBALS['SOBE'] = new stdClass();
-		$GLOBALS['SOBE']->doc = $this->template;
-
 		parent::processRequest($request, $response);
 
-		$pageHeader = $this->template->startpage('Foobar'
-			//$GLOBALS['LANG']->sL('LLL:EXT:workspaces/Resources/Private/Language/locallang.xml:module.title')
-		);
-		$pageEnd = $this->template->endPage();
+		if (TYPO3_MODE == 'BE') {
+			$this->template = t3lib_div::makeInstance('template');
+			$this->pageRenderer = $this->template->getPageRenderer();
 
-		$response->setContent($pageHeader . $response->getContent() . $pageEnd);
+			$GLOBALS['SOBE'] = new stdClass();
+			$GLOBALS['SOBE']->doc = $this->template;
+
+
+			$pageHeader = $this->template->startpage('Foobar'
+			//$GLOBALS['LANG']->sL('LLL:EXT:workspaces/Resources/Private/Language/locallang.xml:module.title')
+			);
+			$pageEnd = $this->template->endPage();
+
+			$response->setContent($pageHeader . $response->getContent() . $pageEnd);
+		} else {
+			$response->setContent($response->getContent());
+		}
 	}
 }

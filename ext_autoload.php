@@ -19,6 +19,7 @@ return array(
 	'tx_rdfexport_columnmappertest' => $extensionPath . 'Tests/ColumnMapperTest.php',
 	'tx_rdfexport_datastructureexportertest' => $extensionPath . 'Tests/DataStructureExporterTest.php',
 	'tx_rdfexport_helpertest' => $extensionPath . 'Tests/HelperTest.php',
+	'tx_rdfexport_utility_ajaxdispatcher' => $extensionPath . 'Tx_RdfExport_Utility_AjaxDispatcher.php',
 	'tx_rdfexport_testcase' => $extensionPath . 'Tests/TestCase.php',
 	'tx_rdfexport_module1' => $extensionPath . 'mod1/index.php',
 );
