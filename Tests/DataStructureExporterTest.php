@@ -112,7 +112,6 @@ class Tx_RdfExport_DataStructureExporterTest extends Tx_RdfExport_TestCase {
 	public function noTriplesAreAddedForEmptyTca() {
 		$tca = array('ctrl' => array(), 'columns' => array());
 		$this->createFakeDataStructureObject($tca);
-		$this->fixture->setGraph($this->getMockedGraph());
 		$statements = $this->fixture->exportDataStructure($this->dataStructureFixture);
 
 		$this->assertEmpty($statements);

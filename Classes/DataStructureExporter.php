@@ -49,16 +49,6 @@ class Tx_RdfExport_DataStructureExporter extends Tx_RdfExport_AbstractExporter {
 	protected $objectManager;
 
 	/**
-	 * @var \Erfurt\Store\Store
-	 */
-	protected $graphStore;
-
-	/**
-	 * @var \Erfurt\Domain\Model\Rdf\Graph
-	 */
-	protected $graph;
-
-	/**
 	 * The base URI of the graph
 	 *
 	 * @var string
@@ -68,9 +58,6 @@ class Tx_RdfExport_DataStructureExporter extends Tx_RdfExport_AbstractExporter {
 
 	public function __construct($table) {
 		$this->table = $table;
-
-			// TODO make this "dynamic"
-		$this->graphBaseUri = 'http://typo3.org/semantic/datastructure/';
 	}
 
 	public function injectObjectManager(\Erfurt\Object\ObjectManager $manager) {
@@ -78,36 +65,7 @@ class Tx_RdfExport_DataStructureExporter extends Tx_RdfExport_AbstractExporter {
 		return $this;
 	}
 
-	public function injectStore(\Erfurt\Store\Store $store) {
-		$this->graphStore = $store;
-		return $this;
-	}
-
 	public function initializeObject() {
-		//$bootstrap = new \Erfurt\Core\Bootstrap('Development');
-		//$bootstrap->run();
-		//$this->objectManager = $bootstrap->getObjectManager();
-		//$this->graphStore = $this->objectManager->get('\Erfurt\Store\Store');
-		//$this->graphStore->setBackendAdapter($this->objectManager->get('\Erfurt\Store\Adapter\Memory'));
-		//print_R($this->graphStore);
-		if (!$this->graph) {
-			$this->graph = $this->graphStore->getNewGraph($this->graphBaseUri);
-		}
-		if (!$this->columnMapper) {
-			$this->columnMapper = new Tx_RdfExport_ColumnMapper();
-		}
-	}
-
-	public function setGraph($graph) {
-		$this->graph = $graph;
-	}
-
-	public function getGraph() {
-		return $this->graph;
-	}
-
-	public function getGraphStore() {
-		return $this->graphStore;
 	}
 
 	/**
@@ -118,11 +76,6 @@ class Tx_RdfExport_DataStructureExporter extends Tx_RdfExport_AbstractExporter {
 	 */
 	public function exportDataStructure(t3lib_DataStructure_Abstract $dataStructureObject) {
 		$this->statements = array();
-		// TODO import relevant Ontologies here if neccessary; or do this during initalization
-		/** @var $RdfParser \Erfurt\Syntax\RdfParser */
-		//$RdfParser = $this->objectManager->get('\Erfurt\Syntax\RdfParser', 'rdfxml');
-		//$RdfParser->initializeObject();
-		//$parsedOntology = $RdfParser->parseToStore('/tmp/typo3tables.rdf', \Erfurt\Syntax\RdfParser::LOCATOR_FILE, 'http://typo3.org');
 
 		if ($dataStructureObject->hasTypeField()) {
 			$types = $dataStructureObject->getAvailableTypes();
