@@ -417,7 +417,7 @@ class Tx_RdfExport_ColumnMapperTest extends Tx_RdfExport_TestCase {
 		$statements = $this->fixture->mapFieldValueToStatement($column, $fieldValue, $recordNodeIdentifier);
 
 		$predicate = Tx_RdfExport_Helper::getRdfIdentifierForField($column);
-		$this->assertArrayHasKey($predicate, $statement);
+		$this->assertArrayHasKey($predicate, $statements[$recordNodeIdentifier]);
 
 		$blankNodeId = $statements[$recordNodeIdentifier][$predicate][0]['value'];
 		if (!$blankNodeId) { $this->fail('Could not get id of blank node.'); }
