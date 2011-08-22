@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<article version="5.0" xmlns="http://docbook.org/ns/docbook"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:svg="http://www.w3.org/2000/svg"
+         xmlns:m="http://www.w3.org/1998/Math/MathML"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns:db="http://docbook.org/ns/docbook">
+  <info>
+    <title>Connecting TYPO3 and the Semantic Web</title>
+
+    <subtitle>Documentation of my project on the Semantic Web and TYPO3 during
+    the Google Summer of Code 2011</subtitle>
+
+    <author>
+      <personname><firstname>Andreas</firstname><surname>Wolf</surname></personname>
+    </author>
+
+    <pubdate>2011-08-22</pubdate>
+
+    <revhistory>
+      <revision>
+        <date>2011-08-22</date>
+
+        <revdescription>
+          <para>First release for the final evaluations in the Google Summer
+          of Code 2011</para>
+        </revdescription>
+      </revision>
+    </revhistory>
+  </info>
+
+  <section>
+    <title>Introduction</title>
+
+    <section>
+      <title>Goal of the project</title>
+
+      <para>The goals of the GSoC project were roughly defined as
+      follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>create an import for Semantic Ontologies to create Domain
+          Objects (and thus TYPO3 data structures) out of them</para>
+        </listitem>
+
+        <listitem>
+          <para>create an Ontology of TYPO3</para>
+        </listitem>
+
+        <listitem>
+          <para>decouple Domain Objects from extensions, thus making it
+          possible to (re)use them among different extensions</para>
+
+          <para>The reusage part is already possible today, but domain objects
+          (or rather data structure descriptions in SQL and the
+          <glossterm>TCA</glossterm>) are coupled to an extension. Decoupling
+          them from business and presentation logic would thus require having
+          two separate extensions.</para>
+        </listitem>
+
+        <listitem>
+          <para>extend the TYPO3 data structures (TCA) by semantic
+          information, to enable automatic inference of relations between
+          different data structures (e.g. for [semi-]automatic mapping between
+          different database tables)</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>These goals were set assuming that there is sufficient library
+      support for Semantic Web technologies in PHP. That later turned out to
+      be wrong; most PHP libraries for dealing with RDF etc. are only partly
+      usable, as they were created for PHP version 4 and have not been
+      maintained for quite a while. Thus, work on the project goals had to be
+      set on hold until sufficient library support was found. The Erfurt
+      library, created by a <orgname>Semantic Web research group</orgname>
+      (<abbrev>AKSW</abbrev>) at the <orgname>University of Leipzig,
+      Germany</orgname>, was chosen for the project then. <personname>Thomas
+      Maroschik</personname>, member of the TYPO3 Semantics team, already had
+      begun a refactoring of the library to make it meet modern OOP standards
+      and adopting it for TYPO3. During the first weeks of the GSoC coding
+      phase, some code and concepts were contributed to this effort.</para>
+    </section>
+
+    <section>
+      <title>The results</title>
+
+      <para>Apart from the problems described in the previous section, some
+      difficulties especially concerning the import of Ontologies arose. The
+      languages that fuel the Semantic Web, especially OWL, are quite
+      feature-rich and expressive. As TYPO3 also is a powerful system with
+      lots of features in its content management part, there is little problem
+      in finding a way to express almost all possible data structures. On the
+      other hand, some of the patterns required for TYPO3 data structures are
+      unique, while some modern standard ways of representing content are not
+      supported. There is also a tight coupling of the underlying storage
+      (normally relational database tables, but also XML is possible in
+      so-called Flexforms) to the different content types.</para>
+
+      <para>The focus of the project was thus moved away from doing an import
+      of - possibly very sophisticated - Ontologies to exporting TYPO3 data
+      structures into triples, enabling users to expose data structures and
+      content in standardized semantic formats.</para>
+
+      <para>Existing approaches for converting a relational database to RDF
+      triples, like <productname>R2RML</productname> (<link
+      xlink:href="???"><uri>http://www.w3.org/ns/r2rml</uri></link>), were
+      also evaluated, but found to be not suitable for TYPO3. This is mainly
+      caused by the heavy usage of the TCA, which holds almost all information
+      about the data structures. The structure of the SQL tables is rather
+      simple, just allowing a rough distinction between e.g. textual and
+      numerical values. Also the special semantics of TYPO3 data structures
+      (like versioning support or relations to other tables) can't be easily
+      seen from the table structure itself, as this information is all
+      implemented in the business logic of the CMS.</para>
+    </section>
+  </section>
+
+  <section>
+    <title>Using the results</title>
+
+    <section>
+      <title>Getting the source code</title>
+
+      <para>The main outcomes of the Summer of Code project can be found in
+      the author's public Git repository at <link
+      xlink:href="???"><uri>https://github.com/andreaswolf/typo3-gsoc</uri></link>.
+      A clone of this repository should be placed in a folder
+      <filename>rdf_export</filename> in
+      <filename>typo3conf/ext/</filename>.</para>
+
+      <para>The code of this extension relies on a new data structure
+      abstraction in TYPO3, which has not been integrated into the core at the
+      time of this writing. The extension will thus not run with an unmodified
+      (vanilla) TYPO3 Core. The required modifications belong to the TCEforms
+      refactoring project done by the author. The code can be found at
+      <uri><link
+      xlink:href="???">https://github.com/andreaswolf/typo3-tceforms/</link></uri>
+      in the branch <emphasis>tceforms-widgets</emphasis>.</para>
+
+      <note>
+        <para>The TCEforms refactoring source code will be moved to the new
+        Incubator repository at
+        <uri>git://git.typo3.org/TYPO3v4/Incubator.git</uri> soon.</para>
+      </note>
+    </section>
+
+    <section>
+      <title>Preparing the environment</title>
+
+      <para>Install the extension via the extension manager. Configure the
+      base URL for the exported data nodes.</para>
+    </section>
+
+    <section>
+      <title>Exporting a data structure</title>
+
+      <figure>
+        <title>The RDF export module with the data structure selector
+        open</title>
+
+        <screenshot>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/dsexport_overview.png"></imagedata>
+            </imageobject>
+          </mediaobject>
+        </screenshot>
+      </figure>
+
+      <para>The data structure to export is selected by its identifier.
+      Currently only regular database tables are supported.</para>
+
+      <figure>
+        <title>The exported datastructure in Turtle notation</title>
+
+        <screenshot>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/dsexport_pages_turtle.png"></imagedata>
+            </imageobject>
+          </mediaobject>
+        </screenshot>
+      </figure>
+    </section>
+
+    <section>
+      <title>Exporting a record</title>
+
+      <para></para>
+
+      <figure>
+        <title></title>
+
+        <screenshot>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/dataexport_overview.png"></imagedata>
+            </imageobject>
+          </mediaobject>
+        </screenshot>
+      </figure>
+
+      <note>
+        <para>The records are also exposed via direct URLs in your local
+        installation. You just have to configure the redirect from the URIs to
+        an eID script that does the magic. Add the following line to the
+        <filename>.htaccess</filename> file in your TYPO3 base dir:</para>
+
+        <programlisting>RewriteRule typo3/data/([a-zA-Z-_]*)/([1-9][0-9]*) index.php?eID=rdf_export_endpoint&amp;controllerName=Export&amp;actionName=exportRecord&amp;arguments[datastructure]=$1&amp;arguments[uid]=$2&amp;arguments[exportformat]=turtle [L]</programlisting>
+
+        <para>The node base URI can be defined via the extension
+        configuration; you just have to set this to the base url of your site
+        + <uri>typo3/data/</uri> (default; can be changed via the
+        <filename>.htacess</filename> file).</para>
+      </note>
+
+      <figure>
+        <title>The exported content record</title>
+
+        <screenshot>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/dataexport_record.png"></imagedata>
+            </imageobject>
+          </mediaobject>
+        </screenshot>
+      </figure>
+    </section>
+  </section>
+
+  <section>
+    <title>The data structure export</title>
+
+    <section>
+      <title>TYPO3 data structures</title>
+
+      <note>
+        <para>Most of the things described in here only apply to regular data
+        structures that use relational database tables, not Flexform XML
+        structures.</para>
+      </note>
+
+      <section>
+        <title>The current situation</title>
+
+        <para>Normal (SQL based) data structures in TYPO3 are described in the
+        Table Configuration Array (TCA). They consist of a set of columns,
+        which are described inside the columns subarray and a set of types,
+        which are described in the types subarray. Additionally, a table
+        description contains some metadata in the ctrl (control) subarray and
+        some more information for displaying parts of the data structures in
+        the palettes array.</para>
+
+        <para>The types of a data structure can be seen as an implementation
+        of the single table inheritance pattern used in Object-Relational
+        Mapping (ORM). For the standard TYPO3 content table tt_content, the
+        various types define different content elements, like text, text with
+        image or multimedia. Other tables use the same pattern, e.g. the
+        tt_news extension with its correspondent table.</para>
+
+        <para>This close coupling between data storage and content types is
+        deeply rooted inside TYPO3, more specificially in the TYPO3 Core
+        Engine (TCE) with its main parts TCEmain (for data processing) and
+        TCEforms (building the backend forms). However, this coupling is also
+        confusing for new users and is not well-fashioned for a
+        content-centric approach which puts the different content types into
+        the center of the CMS. Currently, conversion between different content
+        types is only possible within the same table, as TYPO3 only relies on
+        the column names - structural information - for that. No assumptions
+        can be made on the semantic meaning of columns, except for some
+        columns listed in the ctrl array (like creation date, (de)publication
+        date and allowed user groups). Other field names, like for the id of
+        the parent page (pid) and the unique identifier (uid), are hard-coded
+        into the TYPO3 core.</para>
+
+        <para>Thus one goal of this project - which developed during the
+        course of the project - was to decouple content types from their
+        storage location. For that, the export of data structures was centered
+        around the content-types - they became first-level entities to which
+        exported records directly refer. The content storages (mainly SQL
+        tables) were on the other hand made second-level entities, only
+        referred to by the types.</para>
+      </section>
+
+      <section>
+        <title>Future outlook</title>
+
+        <para>The author is working on a data structure abstraction that
+        provides generic interfaces for handling all data structure types
+        currently known to TYPO3 (TCA and FlexForms). Additionally, this
+        project will enable adding new data structures to TYPO3, e.g. a graph
+        database (also called triple store). This work is part of the
+        aforementioned TCEforms refactoring.</para>
+
+        <para>As soon as the generic data structures are available in the
+        TYPO3 core, it is easy to adopt existing infrastructure for semantic
+        technologies, and also open the TYPO3 universe</para>
+      </section>
+    </section>
+
+    <section>
+      <title>RDF data structures</title>
+
+      <para>Most data structures in the semantic world are based on the
+      open-world assumption - if data is not available, it can't be concluded
+      that it doesn't exist. This is different to a closed concept like the
+      one used in TYPO3. Here, data that is not available in the local
+      installation is considered as being non-existent. This also means that
+      there is no standard mechanism for discovering new content or importing
+      external data sources;</para>
+
+      <para>RDF data structures do not follow a strictly defined format;
+      instead, they are made available in graphs, formed by statements, the
+      so-called triples. These triples consist of a subject, a predicate and
+      an object, much like in (simple) natural language. The subjects can be
+      arbitrary things, the predicates are defined in ontologies and the
+      objects can either be other nodes in the graph or simple data like
+      integers, strings etc.</para>
+
+      <para>A set of RDF triples constitutes a directed graph, where subjects
+      and objects are the nodes, and the predicates form the edges. More on
+      that can be found at <link
+      xlink:href="http://en.wikipedia.org/wiki/Resource_Description_Framework"><uri>http://en.wikipedia.org/wiki/Resource_Description_Framework</uri></link>.</para>
+
+      <para>The export of TYPO3 data structures as designed during the GSoC
+      project tries to bridge some conceptual differences between the concepts
+      of RDF and TYPO3 data structures.</para>
+    </section>
+
+    <section>
+      <title>The export format</title>
+
+      <para>TYPO3 data structures are split into several logical parts on
+      export: The data structure itself, the type(s) and the fields. As
+      described earlier, the focus shifted from the data structure itself to
+      the types as top-level entities, as the record types are the semantic
+      concept behind a CMS, while the way data structures (as containers) are
+      implemented in TYPO3 is only a technical detail.</para>
+
+      <section>
+        <title>What is exported</title>
+
+        <para>As mentioned earlier, there are three entities which are
+        exported:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>data structures as content storages</para>
+          </listitem>
+
+          <listitem>
+            <para>content types as the primary entities that structure
+            content</para>
+          </listitem>
+
+          <listitem>
+            <para>fields as single properties that can be used in content
+            types</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>All of these rely on special base entities defined in a TYPO3
+        Ontology, which is shipped as
+        <filename>Documentation/typo3gsoc.rdf</filename> within the
+        extension.</para>
+      </section>
+
+      <section>
+        <title>Exported data structure example</title>
+
+        <para>An example output for a very simple content type could look like
+        this (Turtle format):</para>
+
+        <programlisting>@prefix t3o: &lt;http://typo3.org/semantic#&gt; .
+@prefix t3ds: &lt;http://typo3.org/semantic/datastructures/&gt; .
+@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+t3o:Text a rdfs:Class ;
+  rdf:subclassOf t3o:ContentType ;
+  t3o:storedIn t3ds:tt_content ;
+  t3o:fields (
+    t3ds:tt_content#header
+    t3ds:tt_content#bodytext
+  ) .
+
+t3ds:tt_content#header a t3o:ContentField ;
+  rdfs:label "header" ;
+  rdfs:range xsd:string .
+
+t3ds:tt_content#bodytext a t3o:ContentField ;
+  rdfs:label "bodytext" ;
+  rdfs:range xsd:string .</programlisting>
+
+        <para>The <classname>t3o:Text</classname> entity is a content type, in
+        this case a simple text element with a header and a bodytext. Real
+        content types of course consist of more fields, also metadata
+        fields.</para>
+
+        <note>
+          <para>This example is only for illustrative purposes. The exported
+          content types currently have identifiers that are coupled to the
+          underlying data structure (i.e. database table). This is subject to
+          change, but changes might require manual intervention.</para>
+        </note>
+
+        <para>Also note how the storage table for the content type is given
+        with the <classname>t3o:storedIn</classname> property. This
+        (theoretically) makes it possible to use a different storage for some
+        content types from the same data structure - however, this is
+        currently not supported by the rest of the TYPO3 core.</para>
+      </section>
+    </section>
+
+    <section>
+      <title>How it works: The technical details</title>
+
+      <para>The data structure export task is carried out by two main classes:
+      The <classname>DataStructureExporter</classname> and the
+      <classname>ColumnMapper</classname>. The DataStructureExporter mainly
+      orchestrates the process, exports the data structure and the content
+      types and does some metadata export, while the column mapper is
+      responsible for exporting single data structure fields.</para>
+
+      <para>All identifiers used for data structures and their elements have
+      to be unique in space and time - no matter where a data structure is
+      exported, the identifier for it, its types and fields should be the same
+      as in other TYPO3 installations. This is neccessary to enable simple ex-
+      and import of data structures and records between different TYPO3
+      instances. To make this possible, all data structures are exported into
+      a common namespace under <uri>typo3.org</uri>.</para>
+
+      <section>
+        <title>The data structure export</title>
+
+        <para>For each data structure, there is one node derived from
+        <classname>t3o:ContentStorage</classname> and 1..n nodes derived from
+        <classname>t3o:ContentType</classname>.</para>
+
+        <para>The <classname>t3o:ContentStorage</classname> node is a direct
+        mapping from a content table. It is conceptually changed from being
+        the parent of a number of content types to an independent container,
+        to which the content types link (notice the change in hierarchy!). The
+        content storage also does not know about its fields - they come from
+        the various types that have it defined as their storage. A
+        (hypothetical) new storage engine relying on the RDF information
+        generated by us would thus have to take the content types into account
+        for creating the storage.</para>
+
+        <para>The <classname>t3o:ContentType</classname> nodes are created for
+        each content type, i.e. the different types a user can choose when
+        creating a record. In terms of the used Ontology, everything is
+        considered as content, even users or TypoScript templates.</para>
+
+        <note>
+          <para>Currently the export is limited to the fields which are
+          directly visible in the forms (outside of palettes). This is due to
+          a limitation in the current data structure abstraction: Blocks (the
+          more powerful successor of the old palettes concept) are not fully
+          implemented yet. See ticket <link
+          xlink:href="http://forge.typo3.org/issues/26322">#26322</link> in
+          the Forge bugtracker for the TCEforms refactoring project.</para>
+        </note>
+
+        <para>The columns are linked to the content types via an anonymous
+        node containing a <classname>rdf:Bag</classname> element and
+        <classname>rdf:_nnn</classname> elements with pointers to all used
+        fields.</para>
+      </section>
+
+      <section>
+        <title>The column export</title>
+
+        <para>For each column that is to be exported, the following steps are
+        carried out (in no specific order):</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>create a new node with a unique identifier</para>
+          </listitem>
+
+          <listitem>
+            <para>try to find a mapping for the specified data type; this is
+            then set as the rdfs:range property of the column node</para>
+
+            <para>If no mapping can be found, the column is currently skipped
+            in the export.</para>
+          </listitem>
+
+          <listitem>
+            <para>set the <classname>rdfs:domain</classname> of the node to
+            the data structure</para>
+
+            <note>
+              <para>It is debatable if this mapping really makes sense - it
+              creates a triangular mapping like this: type -&gt; fields -&gt;
+              data structure. This is not really intended, especially as the
+              fields are tied to content types, not data structures, in the
+              export.</para>
+            </note>
+          </listitem>
+        </itemizedlist>
+
+        <para>All columns are exported as RDF properties, which means they can
+        be used as predicates in triples.</para>
+      </section>
+    </section>
+  </section>
+
+  <section>
+    <title>The data export</title>
+
+    <para>Exporting records as RDF triples is useful for many purposes - e.g.
+    having a common interface for reusing structured data in other
+    applications (with more control over the contents than with plain JSON,
+    which would otherwise be a viable solution, too).</para>
+
+    <para>The data export is currently done on a per-record basis per default,
+    but with the existing infrastructure, it would also be possible to export
+    e.g. all records on a certain page or a complete page with all related
+    records (content elements, users and usergroups etc).´</para>
+
+    <section>
+      <title>The export format</title>
+
+      <para>An exported record consists of one named node that represents the
+      record and (possibly) some blank nodes that contain additional data,
+      like the URIs of related records.</para>
+
+      <section>
+        <title>What gets exported</title>
+
+        <para>Currently, all editable fields of a record (i.e., those which
+        have an entry in the columns array of the TCA entry - or all fields
+        for Flexform data structures) are exported. Metadata fields like
+        creation, change and rendition dates or the creating user are not
+        exported due to technical limitations of the underlying data structure
+        abstraction. Also ignored are fields that have no defined mapping from
+        TYPO3 data structures to RDF triples. For these, the contents are
+        exported as plain strings.</para>
+
+        <warning>
+          <para>Some fields might contain garbage in the current version if
+          their content requires processing to be sensible. This applies to
+          e.g. select fields with a "special" value (like ACLs), group fields
+          with MM tables or file relations.</para>
+        </warning>
+      </section>
+
+      <section>
+        <title>An exported example record</title>
+
+        <para>This is an example Turtle string, exported from a tt_content
+        record:</para>
+
+        <programlisting>@prefix dc: &lt;http://purl.org/dc/elements/1.1/&gt; .
+@prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
+@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix t3o: &lt;http://typo3.org/semantic#&gt; .
+@prefix t3ds: &lt;http://typo3.org/semantic/datastructures/&gt; .
+@prefix t3dt: &lt;http://typo3.org/semantic/datatypes/&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+&lt;http://example.org/typo3/data/tt_content/1&gt; a t3dt:tt_content-text ;
+  t3ds:tt_content#bodytext """Foobar.&lt;br /&gt;Bla bla
+asdasdasdas""" ;
+  t3ds:tt_content#spaceBefore "0" ;
+  t3ds:tt_content#spaceAfter "0" ;
+  t3ds:tt_content#header "Lorem ipsum dolor sit amet..." ;
+  t3ds:tt_content#date "2011-08-17" ;
+  t3ds:tt_content#starttime "1970-01-01T00:00:00Z" ;
+  t3ds:tt_content#endtime "1970-01-01T00:00:00Z" ;
+  t3ds:tt_content#pages _:bNode4e4e1de098d84 ;
+  t3ds:tt_content#fe_group _:bNode4e4e1de0999eb .
+
+_:bNode4e4e1de098d84 a rdf:Seq ;
+  rdf:_1 &lt;http://example.org/typo3/data/pages/2&gt; .
+
+_:bNode4e4e1de0999eb a rdf:Seq .</programlisting>
+
+        <para>As you can see, there is named node for the record itself and
+        two nodes (one of them empty) which provide additional
+        information.</para>
+
+        <note>
+          <para>This is also an example of a possible improvement: Instead of
+          creating a new node, it might be sufficient to just insert rdf:nil
+          as object if a collection (of e.g. pages) is empty (in the example
+          it would be the value of ...#records).</para>
+        </note>
+      </section>
+    </section>
+
+    <section>
+      <title>How it works: The technical details</title>
+
+      <para>The export process for a record is coordinated by the
+      <classname>DataExporter</classname> object. In turn, this uses a
+      <classname>ColumnMapper</classname> object for mapping the record data
+      to RDF field values (with the correct data type).</para>
+
+      <para><note>
+          <para>The concept of using the ColumnMapper for both data structure
+          and data export mildly violates some good practices of OOP. However,
+          as the information generated for the data structures is also
+          neccessary for the data export, it was considered more efficient to
+          integrate the data mapping functionality directly into the column
+          mapper.</para>
+        </note></para>
+
+      <section>
+        <title>Data format mapping</title>
+
+        <para>Most "simple" types like strings, integers, dates etc. are
+        directly mapped to their corresponding types from the XML schema
+        definition. Complex types, especially relations, are mapped to custom
+        types. Good examples are all relations to other records, e.g. the
+        usergroup limitation for content elements.</para>
+      </section>
+    </section>
+  </section>
+
+  <section>
+    <title>Outlook: What's next for Semantic TYPO3?</title>
+
+    <section>
+      <title>Get a fully functional export</title>
+
+      <para>TYPO3 has a whole lot of capabilities regarding content editing.
+      However, only the most common used of them were integrated into the
+      export module until now. To get a fully working and sensible export, at
+      least all elements used in normal content (e.g. no users/usergroups)
+      should be implemented. Things with really low priority include e.g. the
+      ACL modes of the "select" field type.</para>
+
+      <para>To make exporting easier, it should be possible to trigger the
+      export from the list module and maybe the page tree.</para>
+
+      <para>Exporting of FlexForm data structures is currently not possible,
+      due to some limitations in the data structure abstraction, and also some
+      general problems with FlexForms.</para>
+    </section>
+
+    <section>
+      <title>Let the different content types converge</title>
+
+      <para>As laid out in this documentation, there is currently no
+      possibility to convert content automatically between different data
+      structures, because there is no meaning defined for the editable fields
+      of each data structure. When adding this information via e.g.
+      <classname>owl:sameAs</classname> statements, an automatic mapping will
+      become possible. This will likely raise other issues, especially when a
+      full mapping is not possible - in that case information is possibly
+      lost. When automatic mapping of some fields is not possible, the user
+      has to be presented with a list of possible options (create new field,
+      map to some existing field, leave out the field).</para>
+
+      <para>In the long run, it should be targeted to replace the existing
+      different content storages (DB tables, FlexForm XML fields) by a uniform
+      storage API. This API should include easy methods to juggle content
+      between the different storages. When e.g. using a triple store for
+      everything, it would be possible to transform a news article into a
+      regular text element by just changing its
+      <classname>rdf:type</classname> statement. By using standard elements
+      from Ontologies wherever this seems feasible (e.g. for titles,
+      bodytexts, authors), this transformation would not even require a
+      remapping of these elements, because their name would be e.g.
+      <classname>dc:title</classname> in both content types.</para>
+    </section>
+
+    <section>
+      <title>Create an import for Ontologies</title>
+
+      <para>After more experience has been gathered with exporting data to RDF
+      and creating an Ontology from the existing TYPO3 data structures, a plan
+      for mapping standard RDF formats to TYPO3 should be made. For that, an
+      inference engine (to deduce additional facts) and some kind of knowledge
+      base about the existing data structures and their relations among each
+      other are neccessary. This could e.g. enable us to automatically map
+      some field type to an internal TYPO3 data structure type if there is
+      another mapping in our installation - or we could query a central data
+      structure repository to see how this has been handled in other
+      cases.</para>
+    </section>
+  </section>
+
+  <glossary>
+    <glossentry>
+      <glossterm>TCA</glossterm>
+
+      <glossdef>
+        <para>The TYPO3 Table Configuration Array. An associative PHP array
+        containing all relevant information about a data structure (both
+        structural and visual). See <link
+        xlink:href="???"><uri>http://typo3.org/documentation/document-library/core-documentation/doc_core_api/4.3.0/view/4/1/</uri></link>
+        for more information.</para>
+      </glossdef>
+    </glossentry>
+
+    <glossentry>
+      <glossterm>OWL</glossterm>
+
+      <glossdef>
+        <para>The Web Ontology Language, a language used to express Semantic
+        Ontologies.</para>
+      </glossdef>
+    </glossentry>
+  </glossary>
+</article>
