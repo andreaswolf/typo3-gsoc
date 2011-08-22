@@ -36,7 +36,7 @@
  * @package TYPO3
  * @subpackage Tx_RdfExport
  */
-class Tx_RdfExport_DataStructureExporter {
+class Tx_RdfExport_DataStructureExporter extends Tx_RdfExport_AbstractExporter {
 
 	/**
 	 * @var string
@@ -64,16 +64,6 @@ class Tx_RdfExport_DataStructureExporter {
 	 * @var string
 	 */
 	protected $graphBaseUri;
-
-	/**
-	 * @var Tx_RdfExport_ColumnMapper
-	 */
-	protected $columnMapper;
-
-	/**
-	 * @var array
-	 */
-	protected $statements = array();
 
 
 	public function __construct($table) {
@@ -118,10 +108,6 @@ class Tx_RdfExport_DataStructureExporter {
 
 	public function getGraphStore() {
 		return $this->graphStore;
-	}
-
-	public function setColumnMapper($columnMapper) {
-		$this->columnMapper = $columnMapper;
 	}
 
 	/**
@@ -216,26 +202,6 @@ class Tx_RdfExport_DataStructureExporter {
 
 			$fieldObject = $dataStructure->getFieldObject($fieldName);
 			$this->addStatement($fieldNamesBlankNodeId, 'rdf:_' . $i, Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject));
-		}
-	}
-
-	protected function addStatement($subject, $predicate, $object) {
-		if (!is_array($object)) {
-			$object = array('value' => $object);
-		}
-		$subject = Tx_RdfExport_Helper::canonicalize($subject);
-		$predicate = Tx_RdfExport_Helper::canonicalize($predicate);
-		$object['value'] = Tx_RdfExport_Helper::canonicalize($object['value']);
-		$this->statements = t3lib_div::array_merge_recursive_overrule($this->statements, array($subject => array($predicate => array($object))));
-	}
-
-	protected function addMultipleStatements($statements) {
-		foreach ($statements as $subject => $subjectStatements) {
-			foreach ($subjectStatements as $predicate => $objects) {
-				foreach ($objects as $object) {
-					$this->addStatement($subject, $predicate, $object);
-				}
-			}
 		}
 	}
 }

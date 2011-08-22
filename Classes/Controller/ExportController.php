@@ -78,7 +78,7 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 	/**
 	 * Exports a data structure
 	 */
-	public function exportAction() {
+	public function exportDataStructureAction() {
 		$dataStructureName = $this->request->getArgument('datastructure');
 		$this->view->assign('datastructure', $dataStructureName);
 
@@ -87,7 +87,6 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 
 		/** @var $dsResolver t3lib_DataStructure_Resolver_Tca */
 		$dsResolver = t3lib_div::makeInstance('t3lib_DataStructure_Resolver_Tca');
-			// TODO get data structure from parameter
 		$dataStructure = $dsResolver->resolveDataStructure($dataStructureName);
 
 		/** @var $exporter Tx_RdfExport_DataStructureExporter */
@@ -95,6 +94,46 @@ class Tx_RdfExport_Controller_ExportController extends Tx_Extbase_MVC_Controller
 		$exporter->setColumnMapper(t3lib_div::makeInstance('Tx_RdfExport_ColumnMapper'));
 
 		$statements = $exporter->exportDataStructure($dataStructure);
+
+		switch ($format) {
+			case 'html':
+				$this->exportHtml($statements);
+				break;
+			case 'turtle':
+				$this->exportTurtle($statements);
+				break;
+			default:
+				// TODO throw error
+		}
+	}
+
+	/**
+	 * Exports a record
+	 *
+	 * @return void
+	 */
+	public function exportRecordAction() {
+		$dataStructureName = $this->request->getArgument('datastructure');
+		$this->view->assign('datastructure', $dataStructureName);
+
+		$uid = intval($this->request->getArgument('uid'));
+		$this->view->assign('uid', $uid);
+
+		$format = $this->request->getArgument('exportformat');
+		$this->view->assign('format', $format);
+
+		/** @var $dsResolver t3lib_DataStructure_Resolver_Tca */
+		$dsResolver = t3lib_div::makeInstance('t3lib_DataStructure_Resolver_Tca');
+		$dataStructure = $dsResolver->resolveDataStructure($dataStructureName);
+
+		$recordData = t3lib_BEfunc::getRecord($dataStructureName, $uid);
+		$recordObject = t3lib_div::makeInstance('t3lib_TCEforms_Record', $dataStructureName, $recordData, $dataStructure);
+
+		/** @var $exporter Tx_RdfExport_DataExporter */
+		$exporter = t3lib_div::makeInstance('Tx_RdfExport_DataExporter');
+		$exporter->setColumnMapper(t3lib_div::makeInstance('Tx_RdfExport_ColumnMapper'));
+
+		$statements = $exporter->exportRecord($recordObject);
 
 		switch ($format) {
 			case 'html':

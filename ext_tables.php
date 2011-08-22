@@ -15,7 +15,7 @@ if (TYPO3_MODE == 'BE' && !(TYPO3_REQUESTTYPE & TYPO3_REQUESTTYPE_INSTALL)) {
 		'', // Position
 		array(
 				// An array holding the controller-action-combinations that are accessible
-			'Export'        => 'index,export'
+			'Export'        => 'index,exportRecord,exportDataStructure'
 		),
 		array(
 			'access' => 'admin',
