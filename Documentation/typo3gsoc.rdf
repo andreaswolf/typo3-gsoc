@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns="http://typo3.org/semantic#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xml:base="http://typo3.org/semantic">
+  <owl:Ontology rdf:about=""/>
+  <owl:Class rdf:ID="ContentType">
+    <rdfs:comment xml:lang="en">A content type, e.g. Text or News Article</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+  </owl:Class>
+  <owl:Class rdf:ID="ContentStorage">
+    <rdfs:comment xml:lang="en">A container for storing content, e.g. a database table</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+  </owl:Class>
+  <owl:Class rdf:ID="RelationalDatabaseTable">
+    <rdfs:comment xml:lang="en">A table inside a relational database table</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="#ContentStorage"/>
+  </owl:Class>
+  <owl:Class rdf:ID="XmlContainer">
+    <rdfs:comment xml:lang="en">An XML container for storing content</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="#ContentStorage"/>
+  </owl:Class>
+  <owl:Class rdf:ID="ContentProperty">
+    <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >A property of a content type</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:Class>
+  <owl:ObjectProperty rdf:ID="fields">
+    <rdfs:comment xml:lang="en">A list of fields that belongs to a content type</rdfs:comment>
+    <rdfs:domain rdf:resource="#ContentStorage"/>
+    <rdfs:range rdf:resource="#ContentProperty"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:ID="storedIn"/>
+  <owl:ObjectProperty rdf:ID="table">
+    <rdfs:comment xml:lang="en">A table for a database storage</rdfs:comment>
+    <rdfs:domain rdf:resource="#RelationalDatabaseTable"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  </owl:ObjectProperty>
+</rdf:RDF>
+
+<!-- Created with TopBraid -->
