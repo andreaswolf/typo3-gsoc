@@ -104,6 +104,14 @@ class Tx_RdfExport_ColumnMapper {
 					$allowed = $configuration['allowed'];
 					$onlySingleTableAllowed = (strpos($allowed, ',') === FALSE && $allowed !== '*');
 
+						// TODO handle single-value relations (maxitems == 1) correctly if a value is set -> don't use a blank node, but export the value directly
+					if ($configuration['maxitems'] == 1 && $fieldValue == '0') {
+						return(array(
+							array(Tx_RdfExport_Helper::getRdfIdentifierForField($fieldObject) => array($this->createObject('rdf:nil'))),
+							array()
+						));
+					}
+
 						// copied from t3lib_TCEforms::getSingleField_typeGroup()
 					$temp_itemArray = t3lib_div::trimExplode(',', $fieldValue, TRUE);
 					foreach ($temp_itemArray as $dbRead) {
